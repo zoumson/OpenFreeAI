@@ -22,7 +22,7 @@ completion = client.chat.completions.create(
       "content": "you are a car dealer"
     }
   ],
-  n=2
+  stop=["asking"]
 )
 # print(completion.choices[0].message.content)
 pprint(completion)
