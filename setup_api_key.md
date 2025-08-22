@@ -1,4 +1,4 @@
-## Linux / macOS Setup: Set `OPENAI_API_KEY` Environment Variable using zsh
+## 1. Linux / macOS Setup: Set `OPENAI_API_KEY` Environment Variable using zsh
 
 ### Step 1: Add the API key to your `.zshrc`
 
@@ -49,3 +49,25 @@ echo -n "$OPENAI_API_KEY" | od -c
 ```
 
 You should see just the key characters, no `\n`
+
+## 2. Virtual environment
+
+### Step 1: Create a virtual environment
+
+```bash
+python3 -m venv venv
+```
+
+### Step 2: Activate the virtual environment
+
+```bash
+source venv/bin/activate
+```
+
+(you’ll see (venv) appear in your terminal prompt)
+
+### Step 3: Deactivate the virtual environment
+
+```bash
+deactivate
+```
