@@ -13,6 +13,10 @@ completion = client.chat.completions.create(
   extra_body={},
   model="openai/gpt-oss-20b:free",
   messages=[
+      {
+          "role": "system",
+          "content": "taiwan"
+      },
     {
       "role": "user",
       "content": "How are you when it's raining?"
