@@ -1,5 +1,6 @@
 import os
 from openai import OpenAI
+from rich import print as pprint 
 
 client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
@@ -18,4 +19,5 @@ completion = client.chat.completions.create(
     }
   ]
 )
-print(completion.choices[0].message.content)
+# print(completion.choices[0].message.content)
+pprint(completion)
