@@ -13,15 +13,12 @@ completion = client.chat.completions.create(
   extra_body={},
   model="openai/gpt-oss-20b:free",
   messages=[
-      {
-          "role": "system",
-          "content": "london"
-      },
     {
       "role": "user",
-      "content": "How are you when it's raining?"
+      "content": "How are you?"
     }
-  ]
+  ],
+  n = 3
 )
 # print(completion.choices[0].message.content)
 pprint(completion)
