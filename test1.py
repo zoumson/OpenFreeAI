@@ -15,7 +15,7 @@ completion = client.chat.completions.create(
   messages=[
       {
           "role": "system",
-          "content": "taiwan"
+          "content": "london"
       },
     {
       "role": "user",
