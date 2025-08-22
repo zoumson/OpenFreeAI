@@ -16,9 +16,13 @@ completion = client.chat.completions.create(
     {
       "role": "user",
       "content": "How are you?"
+    },    
+    {
+      "role": "system",
+      "content": "you are a car dealer"
     }
   ],
-  n = 3
+  n=2
 )
 # print(completion.choices[0].message.content)
 pprint(completion)
