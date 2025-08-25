@@ -19,19 +19,44 @@ client = OpenAI(
 )
 
 # ----------------------------
+# Global model config
+# ----------------------------
+MODEL_NAME = "qwen/qwen3-coder:free"
+
+# ----------------------------
 # Retry wrapper for API calls
 # ----------------------------
 @retry_request(retries=5, backoff_factor=2)
-def get_completion(prompt: str):
-    return client.chat.completions.create(
-        model="qwen/qwen3-coder:free",
+def get_completion(prompt: str) -> str:
+    """Return the full completion text (non-streaming)."""
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
         messages=[{"role": "user", "content": prompt}],
     )
+    return response.choices[0].message.content  # ✅ return plain text
+
+@retry_request(retries=5, backoff_factor=2)
+def get_reply(prompt: str):
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True
+        )
+        for chunk in response:
+            if chunk.choices[0].delta.content:  # check before printing
+                yield chunk.choices[0].delta.content
+    except (InternalServerError, RateLimitError) as err:
+        yield f'error occurred\n{err}'
 
 # ----------------------------
 # Main
 # ----------------------------
 if __name__ == "__main__":
+    # Example: streaming reply
+    # for reply in get_reply("please introduce Taipei"):
+    #     print(reply, end='')
+
+    # Example: single completion
     completion = get_completion("Hello, how are you?")
-    # Print only the message content, not the whole object
     pprint(completion)
