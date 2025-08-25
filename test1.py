@@ -8,7 +8,6 @@ import time
 # Check API key before anything
 # ----------------------------
 api_key = os.environ.get("OPENAI_API_KEY")
-# print(api_key)
 if not api_key:
     raise ValueError("Please set OPENAI_API_KEY in your environment")
 
@@ -16,8 +15,7 @@ if not api_key:
 # Initialize OpenAI client
 # ----------------------------
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=api_key,
+    base_url="https://openrouter.ai/api/v1"
 )
 
 # ----------------------------
