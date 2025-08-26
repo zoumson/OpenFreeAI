@@ -5,11 +5,7 @@ from managers.usage_manager import UsageManager
 # ----------------------------
 # Initialize managers
 # ----------------------------
-model_manager = LLMModelManager([
-    "qwen/qwen3-coder:free",
-    "gpt-3.5-turbo",
-    "gpt-4"
-])
+model_manager = LLMModelManager()
 usage_manager = UsageManager(model_manager=model_manager)
 client_manager = ClientManager(model_manager=model_manager, usage_manager=usage_manager)
 
