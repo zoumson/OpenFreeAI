@@ -24,3 +24,8 @@ Thumbs.db
 # - cmd_git.md
 # - requirements.txt
 # - setup_api_key.md
+
+# Ignore LLM model and prompt files
+prompts.json
+client_logs.json
+usage.json
