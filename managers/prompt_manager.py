@@ -1,11 +1,10 @@
-from managers.resource_manager import ResourceManager
 from pathlib import Path
+from managers.resource_manager import ResourceManager
 
 class PromptManager:
     def __init__(self, file_path=None):
         self.prompts = {}
         self.file_path = Path(file_path) if file_path else None
-
         if self.file_path and self.file_path.exists():
             self.load_from_file(self.file_path)
 

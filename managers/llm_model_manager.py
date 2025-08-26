@@ -1,10 +1,7 @@
-import json
 from enum import Enum
 from pathlib import Path
+from managers.resource_manager import ResourceManager
 
-# ----------------------------
-# Define Enum for LLM models
-# ----------------------------
 class LLMModelsEnum(str, Enum):
     OPENAI_GPT_OSS = "openai/gpt-oss-20b:free"
     Z_AI_GLM = "z-ai/glm-4.5-air:free"
@@ -13,9 +10,7 @@ class LLMModelsEnum(str, Enum):
     VENICE_UNCENSORED = "cognitivecomputations/dolphin-mistral-24b-venice-edition:free"
     GOOGLE_GEMMA = "google/gemma-3n-e2b-it:free"
 
-# ----------------------------
-# LLM Model Manager
-# ----------------------------
+
 class LLMModelManager:
     def __init__(self, file_path="models.json"):
         self.file_path = Path(file_path)
@@ -23,7 +18,6 @@ class LLMModelManager:
         if self.file_path.exists():
             self.load_from_file()
         else:
-            # initialize with all enums by default
             self.models = [model.value for model in LLMModelsEnum]
             self.export_to_file()
 
@@ -46,12 +40,10 @@ class LLMModelManager:
 
     def export_to_file(self, file_path=None):
         path = Path(file_path or self.file_path)
-        with open(path, "w") as f:
-            json.dump(self.models, f, indent=4)
+        ResourceManager.save_json(path, self.models)
         return path
 
     def load_from_file(self, file_path=None):
         path = Path(file_path or self.file_path)
-        with open(path, "r") as f:
-            self.models = json.load(f)
+        self.models = ResourceManager.load_json(path)
         return self.models
