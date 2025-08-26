@@ -5,9 +5,7 @@ from managers import llm_client
 @pytest.fixture
 def mock_client_manager():
     with patch("managers.llm_client.client_manager") as mock:
-        # Mock get_completion
         mock.get_completion = MagicMock(return_value="mocked completion")
-        # Mock get_reply
         def fake_reply(model_index, prompt):
             yield "chunk1 "
             yield "chunk2"
@@ -16,7 +14,6 @@ def mock_client_manager():
 
 def test_send_prompt_default_model(mock_client_manager):
     result = llm_client.send_prompt("Hello")
-    # Should call the mocked get_completion
     mock_client_manager.get_completion.assert_called_once()
     assert result == "mocked completion"
 
