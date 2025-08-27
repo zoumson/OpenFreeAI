@@ -1,92 +1,75 @@
+import json
 from pathlib import Path
-from managers.resource_manager import ResourceManager
-from collections import defaultdict
+from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+
+# Flask app and DB
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///llm_models.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+class LLMModel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    full_model = db.Column(db.String, unique=True, nullable=False)
+    provider = db.Column(db.String, nullable=True)
+    model_name = db.Column(db.String, nullable=True)
+    tag = db.Column(db.String, nullable=True)
+
+    def __repr__(self):
+        return f"<LLMModel {self.full_model}>"
 
 class LLMModelManager:
-    def __init__(self, file_path="models.json"):
-        self.file_path = Path(file_path)
-        self.models = {}  # {provider: [{"model":..., "tag":...}]}
-        if self.file_path.exists():
-            self.load_from_file()
+    def __init__(self):
+        with app.app_context():
+            db.create_all()
+
+    def add_model(self, full_model, provider=None, model_name=None, tag=None):
+        if ":" in full_model and not tag:
+            parts = full_model.split(":")
+            full_model_name = parts[0]
+            tag = parts[1]
         else:
-            self._initialize_default_models()
-            self.export_to_file()
+            full_model_name = full_model
 
-    def _initialize_default_models(self):
-        # Example defaults
-        self.models = {
-            "openai": [{"model": "gpt-oss-20b", "tag": "free"}],
-            "google": [{"model": "gemini-2.5-flash-image-preview", "tag": "free"}],
-        }
+        if "/" in full_model_name and not model_name:
+            provider, model_name = full_model_name.split("/", 1)
 
-    @staticmethod
-    def parse_full_model(full_model: str):
-        """Parse a full model string like 'openai/gpt-oss-20b:free'"""
-        if ":" in full_model:
-            model_id, tag = full_model.split(":", 1)
-        else:
-            model_id, tag = full_model, "free"
+        # Check if already exists
+        existing = LLMModel.query.filter_by(full_model=full_model).first()
+        if existing:
+            return False
 
-        if "/" in model_id:
-            provider, model_name = model_id.split("/", 1)
-        else:
-            provider, model_name = "unknown", model_id
-
-        return provider, model_name, tag
-
-    def add_model(self, full_model: str = None, provider: str = None, model_name: str = None, tag: str = "free") -> bool:
-        """Add a model using full string or separate fields."""
-        if full_model:
-            provider, model_name, tag = self.parse_full_model(full_model)
-
-        if provider not in self.models:
-            self.models[provider] = []
-
-        # Avoid duplicates
-        for m in self.models[provider]:
-            if m["model"] == model_name and m["tag"] == tag:
-                return False
-
-        self.models[provider].append({"model": model_name, "tag": tag})
-        self.export_to_file()
+        model = LLMModel(
+            full_model=full_model,
+            provider=provider,
+            model_name=model_name,
+            tag=tag,
+        )
+        db.session.add(model)
+        db.session.commit()
         return True
 
-    def remove_model(self, provider: str, model_name: str, tag: str = "free") -> bool:
-        if provider not in self.models:
-            return False
-        for m in self.models[provider]:
-            if m["model"] == model_name and m["tag"] == tag:
-                self.models[provider].remove(m)
-                self.export_to_file()
-                return True
-        return False
+    def bulk_add_from_json(self, file_path):
+        path = Path(file_path)
+        if not path.exists():
+            return 0
+        with open(path, "r") as f:
+            models = json.load(f)
+        count = 0
+        for m in models:
+            if self.add_model(m):
+                count += 1
+        return count
 
     def get_models(self):
-        """Flattened list for CLI/API: ['provider/model:tag']"""
-        full_list = []
-        for provider, models in self.models.items():
-            for m in models:
-                full_list.append(f"{provider}/{m['model']}:{m['tag']}")
-        return full_list
+        return [m.full_model for m in LLMModel.query.all()]
 
-    def get_models_grouped_by_provider(self):
-        """Return grouped dict for CLI display."""
-        return self.models
-
-    def get_models_grouped_by_tag(self):
-        """Return dict {tag: [models]}"""
-        grouped = defaultdict(list)
-        for provider, models in self.models.items():
-            for m in models:
-                grouped[m["tag"]].append({"provider": provider, "model": m["model"]})
-        return dict(grouped)
-
-    def export_to_file(self, file_path=None):
-        path = Path(file_path or self.file_path)
-        ResourceManager.save_json(path, self.models)
-        return path
-
-    def load_from_file(self, file_path=None):
-        path = Path(file_path or self.file_path)
-        self.models = ResourceManager.load_json(path)
-        return self.models
+    def get_grouped_models(self):
+        grouped = {}
+        for m in LLMModel.query.all():
+            prov = m.provider or "unknown"
+            if prov not in grouped:
+                grouped[prov] = []
+            grouped[prov].append({"model_name": m.model_name, "tag": m.tag, "full_model": m.full_model})
+        return grouped
