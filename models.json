@@ -1,61 +1,99 @@
-[
-    "google/gemini-2.5-flash-image-preview:free",
-    "openai/gpt-oss-20b:free",
-    "z-ai/glm-4.5-air:free",
-    "qwen/qwen3-coder:free",
-    "moonshotai/kimi-k2:free",
-    "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
-    "google/gemma-3n-e2b-it:free",
-    "tencent/hunyuan-a13b-instruct:free",
-    "tngtech/deepseek-r1t2-chimera:free",
-    "mistralai/mistral-small-3.2-24b-instruct:free",
-    "moonshotai/kimi-dev-72b:free",
-    "deepseek/deepseek-r1-0528-qwen3-8b:free",
-    "deepseek/deepseek-r1-0528:free",
-    "sarvamai/sarvam-m:free",
-    "mistralai/devstral-small-2505:free",
-    "google/gemma-3n-e4b-it:free",
-    "meta-llama/llama-3.3-8b-instruct:free",
-    "qwen/qwen3-4b:free",
-    "qwen/qwen3-30b-a3b:free",
-    "qwen/qwen3-8b:free",
-    "qwen/qwen3-14b:free",
-    "qwen/qwen3-235b-a22b:free",
-    "tngtech/deepseek-r1t-chimera:free",
-    "microsoft/mai-ds-r1:free",
-    "shisa-ai/shisa-v2-llama3.3-70b:free",
-    "arliai/qwq-32b-arliai-rpr-v1:free",
-    "agentica-org/deepcoder-14b-preview:free",
-    "moonshotai/kimi-vl-a3b-thinking:free",
-    "nvidia/llama-3.1-nemotron-ultra-253b-v1:free",
-    "meta-llama/llama-4-maverick:free",
-    "meta-llama/llama-4-scout:free",
-    "google/gemini-2.5-pro-exp-03-25",
-    "qwen/qwen2.5-vl-32b-instruct:free",
-    "deepseek/deepseek-chat-v3-0324:free",
-    "mistralai/mistral-small-3.1-24b-instruct:free",
-    "google/gemma-3-4b-it:free",
-    "google/gemma-3-12b-it:free",
-    "rekaai/reka-flash-3:free",
-    "google/gemma-3-27b-it:free",
-    "qwen/qwq-32b:free",
-    "nousresearch/deephermes-3-llama-3-8b-preview:free",
-    "cognitivecomputations/dolphin3.0-r1-mistral-24b:free",
-    "cognitivecomputations/dolphin3.0-mistral-24b:free",
-    "qwen/qwen2.5-vl-72b-instruct:free",
-    "mistralai/mistral-small-24b-instruct-2501:free",
-    "deepseek/deepseek-r1-distill-qwen-14b:free",
-    "deepseek/deepseek-r1-distill-llama-70b:free",
-    "deepseek/deepseek-r1:free",
-    "google/gemini-2.0-flash-exp:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "qwen/qwen-2.5-coder-32b-instruct:free",
-    "meta-llama/llama-3.2-3b-instruct:free",
-    "meta-llama/llama-3.2-11b-vision-instruct:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "meta-llama/llama-3.1-405b-instruct:free",
-    "mistralai/mistral-nemo:free",
-    "google/gemma-2-9b-it:free",
-    "mistralai/mistral-7b-instruct:free"
-  ]
+{
+    "google": [
+      {"model": "gemini-2.5-flash-image-preview", "tag": "free"},
+      {"model": "gemma-3n-e2b-it", "tag": "free"},
+      {"model": "gemma-3n-e4b-it", "tag": "free"},
+      {"model": "gemma-3-4b-it", "tag": "free"},
+      {"model": "gemma-3-12b-it", "tag": "free"},
+      {"model": "gemma-3-27b-it", "tag": "free"},
+      {"model": "gemini-2.5-pro-exp-03-25", "tag": ""},
+      {"model": "gemini-2.0-flash-exp", "tag": "free"},
+      {"model": "gemma-2-9b-it", "tag": "free"}
+    ],
+    "openai": [
+      {"model": "gpt-oss-20b", "tag": "free"}
+    ],
+    "z-ai": [
+      {"model": "glm-4.5-air", "tag": "free"}
+    ],
+    "qwen": [
+      {"model": "qwen3-coder", "tag": "free"},
+      {"model": "qwen3-4b", "tag": "free"},
+      {"model": "qwen3-30b-a3b", "tag": "free"},
+      {"model": "qwen3-8b", "tag": "free"},
+      {"model": "qwen3-14b", "tag": "free"},
+      {"model": "qwen3-235b-a22b", "tag": "free"},
+      {"model": "qwq-32b", "tag": "free"},
+      {"model": "qwen2.5-vl-32b-instruct", "tag": "free"},
+      {"model": "qwen2.5-vl-72b-instruct", "tag": "free"},
+      {"model": "qwen-2.5-coder-32b-instruct", "tag": "free"},
+      {"model": "qwen-2.5-72b-instruct", "tag": "free"}
+    ],
+    "moonshotai": [
+      {"model": "kimi-k2", "tag": "free"},
+      {"model": "kimi-dev-72b", "tag": "free"},
+      {"model": "kimi-vl-a3b-thinking", "tag": "free"}
+    ],
+    "cognitivecomputations": [
+      {"model": "dolphin-mistral-24b-venice-edition", "tag": "free"},
+      {"model": "dolphin3.0-r1-mistral-24b", "tag": "free"},
+      {"model": "dolphin3.0-mistral-24b", "tag": "free"}
+    ],
+    "tencent": [
+      {"model": "hunyuan-a13b-instruct", "tag": "free"}
+    ],
+    "tngtech": [
+      {"model": "deepseek-r1t2-chimera", "tag": "free"},
+      {"model": "deepseek-r1t-chimera", "tag": "free"}
+    ],
+    "mistralai": [
+      {"model": "mistral-small-3.2-24b-instruct", "tag": "free"},
+      {"model": "devstral-small-2505", "tag": "free"},
+      {"model": "mistral-small-3.1-24b-instruct", "tag": "free"},
+      {"model": "mistral-small-24b-instruct-2501", "tag": "free"},
+      {"model": "mistral-nemo", "tag": "free"},
+      {"model": "mistral-7b-instruct", "tag": "free"}
+    ],
+    "deepseek": [
+      {"model": "deepseek-r1-0528-qwen3-8b", "tag": "free"},
+      {"model": "deepseek-r1-0528", "tag": "free"},
+      {"model": "deepseek-chat-v3-0324", "tag": "free"},
+      {"model": "deepseek-r1-distill-qwen-14b", "tag": "free"},
+      {"model": "deepseek-r1-distill-llama-70b", "tag": "free"},
+      {"model": "deepseek-r1", "tag": "free"}
+    ],
+    "sarvamai": [
+      {"model": "sarvam-m", "tag": "free"}
+    ],
+    "microsoft": [
+      {"model": "mai-ds-r1", "tag": "free"}
+    ],
+    "shisa-ai": [
+      {"model": "shisa-v2-llama3.3-70b", "tag": "free"}
+    ],
+    "arliai": [
+      {"model": "qwq-32b-arliai-rpr-v1", "tag": "free"}
+    ],
+    "agentica-org": [
+      {"model": "deepcoder-14b-preview", "tag": "free"}
+    ],
+    "nvidia": [
+      {"model": "llama-3.1-nemotron-ultra-253b-v1", "tag": "free"}
+    ],
+    "meta-llama": [
+      {"model": "llama-3.3-8b-instruct", "tag": "free"},
+      {"model": "llama-4-maverick", "tag": "free"},
+      {"model": "llama-4-scout", "tag": "free"},
+      {"model": "llama-3.3-70b-instruct", "tag": "free"},
+      {"model": "llama-3.2-3b-instruct", "tag": "free"},
+      {"model": "llama-3.2-11b-vision-instruct", "tag": "free"},
+      {"model": "llama-3.1-405b-instruct", "tag": "free"}
+    ],
+    "nousresearch": [
+      {"model": "deephermes-3-llama-3-8b-preview", "tag": "free"}
+    ],
+    "rekaai": [
+      {"model": "reka-flash-3", "tag": "free"}
+    ]
+  }
   
