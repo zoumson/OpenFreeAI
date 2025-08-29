@@ -16,13 +16,15 @@ def send_prompt(prompt: str, model_name: str = None) -> str:
     """Send prompt to a model (default: first in list)."""
     if model_name is None:
         model_name = model_manager.get_models()[0]
-    return client_manager.get_completion(model_manager.get_models().index(model_name), prompt)
+    index = model_manager.get_models().index(model_name)
+    return client_manager.get_completion(index, prompt)
 
 def stream_prompt(prompt: str, model_name: str = None):
     """Stream prompt response."""
     if model_name is None:
         model_name = model_manager.get_models()[0]
-    return client_manager.get_reply(model_manager.get_models().index(model_name), prompt)
+    index = model_manager.get_models().index(model_name)
+    return client_manager.get_reply(index, prompt)
 
 def get_usage(model_name: str):
     """Get usage for a specific model."""

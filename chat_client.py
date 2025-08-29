@@ -1,23 +1,20 @@
 import click
-from clients.llm_client import send_prompt, stream_prompt  # keep run prompt functions
-from managers.llm_model_manager import app, db, LLMModelManager
-
-manager = LLMModelManager()
+from clients.llm_client import send_prompt, stream_prompt, model_manager
 
 @click.group()
 def cli():
-    """Main CLI for LLM operations"""
+    """Main CLI for LLM operations."""
     pass
 
 # ---------------------------
-# Run prompt commands (existing)
+# Run prompt commands
 # ---------------------------
 @cli.command(help="Send a prompt to the LLM.")
 @click.option("--prompt", prompt="Enter your prompt", help="The input text prompt to send to the LLM.")
 @click.option("--model", default=None, help="LLM model name (full identifier like 'openai/gpt-oss-20b:free').")
 @click.option("--stream", is_flag=True, help="Enable streaming mode for output.")
 def run(prompt, model, stream):
-    available_models = manager.get_models()  # use DB models
+    available_models = model_manager.get_models()
     if not available_models:
         click.echo("[INFO]: No models available. Please load models first.")
         return
@@ -49,12 +46,12 @@ def model():
 @model.command("load", help="Load models from a JSON file into the database.")
 @click.argument("json_file", type=click.Path(exists=True))
 def load(json_file):
-    count = manager.bulk_add_from_json(json_file)
+    count = model_manager.bulk_add_from_json(json_file)
     click.echo(f"[SUCCESS]: Added {count} models from {json_file}")
 
 @model.command("list", help="List all models stored in the database.")
 def list_models():
-    models = manager.get_models()
+    models = model_manager.get_models()
     if not models:
         click.echo("[INFO]: No models in the database.")
         return
@@ -64,11 +61,11 @@ def list_models():
 
 @model.command("grouped", help="List models grouped by provider.")
 def grouped():
-    grouped = manager.get_grouped_models()
-    if not grouped:
+    grouped_data = model_manager.get_grouped_models()
+    if not grouped_data:
         click.echo("[INFO]: No models in the database.")
         return
-    for provider, models in grouped.items():
+    for provider, models in grouped_data.items():
         click.echo(f"Provider: {provider}")
         for m in models:
             click.echo(f"  - {m['model_name']}:{m['tag']}")

@@ -4,6 +4,9 @@ from openai import OpenAI, InternalServerError, RateLimitError
 from utils.retry_decorator import retry_request
 from managers.usage_manager import UsageManager
 from managers.llm_model_manager import LLMModelManager
+from database.models import PromptRecord
+from database import db
+from app import app
 from managers.resource_manager import ResourceManager
 
 class ClientManager:
@@ -17,7 +20,6 @@ class ClientManager:
         self.usage_manager = usage_manager
         self.log_file = Path("client_logs.json")
 
-        # Load previous usage or logs if exists
         if self.log_file.exists():
             self.usage_manager.usage.update(ResourceManager.load_json(self.log_file))
 
@@ -29,9 +31,20 @@ class ClientManager:
             messages=[{"role": "user", "content": prompt}],
         )
         content = response.choices[0].message.content
-        # Update usage (fake token count = len of content for demo)
         self.usage_manager.log_usage(model_name, len(content))
         ResourceManager.save_json(self.log_file, self.usage_manager.usage)
+
+        # Save to DB
+        with app.app_context():
+            record = PromptRecord(
+                prompt_text=prompt,
+                completion_text=content,
+                model_name=model_name,
+                streamed=False
+            )
+            db.session.add(record)
+            db.session.commit()
+
         return content
 
     @retry_request(retries=5, backoff_factor=2)
@@ -44,11 +57,28 @@ class ClientManager:
                 stream=True
             )
             total_tokens = 0
+            collected = []
+
             for chunk in response:
-                if chunk.choices[0].delta.content:
-                    total_tokens += len(chunk.choices[0].delta.content)
-                    yield chunk.choices[0].delta.content
+                delta = chunk.choices[0].delta.get("content")
+                if delta:
+                    total_tokens += len(delta)
+                    collected.append(delta)
+                    yield delta
+
             self.usage_manager.log_usage(model_name, total_tokens)
             ResourceManager.save_json(self.log_file, self.usage_manager.usage)
+
+            with app.app_context():
+                record = PromptRecord(
+                    prompt_text=prompt,
+                    completion_text="".join(collected),
+                    model_name=model_name,
+                    streamed=True
+                )
+                db.session.add(record)
+                db.session.commit()
         except (InternalServerError, RateLimitError) as err:
-            yield f"error occurred\n{err}"
+            yield f"[ERROR]: {err}"
+        except Exception as e:
+            yield f"[ERROR]: {e}"

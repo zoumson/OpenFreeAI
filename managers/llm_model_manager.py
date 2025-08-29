@@ -1,22 +1,10 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 import json
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///models.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
-class LLMModel(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    full_model = db.Column(db.String, unique=True, nullable=False)
-    provider = db.Column(db.String, nullable=True)
-    model_name = db.Column(db.String, nullable=True)
-    tag = db.Column(db.String, nullable=True)
+from database.models import LLMModel
+from database import db
+from app import app
 
 class LLMModelManager:
     def __init__(self):
-        # Delay all DB operations until app context is available
         with app.app_context():
             db.create_all()
 
@@ -30,7 +18,12 @@ class LLMModelManager:
             provider_val = provider or full_model.split("/")[0]
             model_val = model_name or full_model.split("/")[1].split(":")[0]
             tag_val = tag or full_model.split(":")[1] if ":" in full_model else ""
-            new_model = LLMModel(full_model=full_model, provider=provider_val, model_name=model_val, tag=tag_val)
+            new_model = LLMModel(
+                full_model=full_model,
+                provider=provider_val,
+                model_name=model_val,
+                tag=tag_val
+            )
             db.session.add(new_model)
             db.session.commit()
             return True
