@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from redis import Redis
 from rq import Queue
-from server.queue.tasks import process_prompt
+from server.jobs.tasks import process_prompt
 from server.database.models import LLMModel, PromptRecord
 from server.managers.llm_model_manager import LLMModelManager
 from server.config import Config
@@ -75,3 +75,7 @@ def get_history():
         for r in records
     ]
     return jsonify(history)
+
+@api_v1.route("/version", methods=["GET"])
+def get_version():
+    return jsonify({"version": Config.APP_VERSION})

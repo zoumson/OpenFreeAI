@@ -14,10 +14,5 @@ with app.app_context():
 # Register blueprint dynamically using the prefix from config
 app.register_blueprint(producer_api, url_prefix=Config.API_PREFIX)
 
-# Version endpoint using the same prefix
-@api_v1.route("/version", methods=["GET"])
-def get_version():
-    return {"version": Config.APP_VERSION}
-
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
