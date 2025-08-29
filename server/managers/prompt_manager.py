@@ -1,5 +1,5 @@
 from pathlib import Path
-from managers.resource_manager import ResourceManager
+from server.managers.resource_manager import ResourceManager
 
 class PromptManager:
     def __init__(self, file_path=None):

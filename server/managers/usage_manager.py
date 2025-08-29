@@ -1,6 +1,6 @@
 from pathlib import Path
-from managers.llm_model_manager import LLMModelManager
-from managers.resource_manager import ResourceManager
+from server.managers.llm_model_manager import LLMModelManager
+from server.managers.resource_manager import ResourceManager
 
 class UsageManager:
     def __init__(self, file_path="usage.json", model_manager: LLMModelManager = None):

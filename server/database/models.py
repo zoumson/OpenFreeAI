@@ -1,5 +1,5 @@
 from datetime import datetime
-from database import db
+from server.database import db 
 
 class LLMModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,9 +1,10 @@
+# server/app.py
 from flask import Flask, request, jsonify
-from database import db
-from database.models import LLMModel, PromptRecord
-from managers.client_manager import ClientManager
-from managers.llm_model_manager import LLMModelManager
-from managers.usage_manager import UsageManager
+from server.database import db
+from server.database.models import LLMModel, PromptRecord
+from server.managers.client_manager import ClientManager
+from server.managers.llm_model_manager import LLMModelManager
+from server.managers.usage_manager import UsageManager
 
 app = Flask(__name__)
 
@@ -31,7 +32,11 @@ def send_prompt():
     if not prompt:
         return jsonify({"error": "Missing 'prompt'"}), 400
 
-    response = client_manager.get_completion(0, prompt)  # adjust index if needed
+    try:
+        response = client_manager.get_completion(0, prompt)  # adjust index if needed
+    except IndexError:
+        return jsonify({"error": "No models available. Load some models first."}), 400
+
     return jsonify({"response": response})
 
 
@@ -44,6 +49,24 @@ def load_model():
 
     count = model_manager.bulk_add_from_json(path)
     return jsonify({"message": f"Loaded {count} models from {path}"})
+
+
+@app.route("/model/list", methods=["GET"])
+def list_models():
+    models = [m.full_model for m in LLMModel.query.all()]
+    return jsonify({"models": models})
+
+
+@app.route("/model/grouped", methods=["GET"])
+def grouped_models():
+    grouped = {}
+    for m in LLMModel.query.all():
+        provider = m.provider or "unknown"
+        grouped.setdefault(provider, []).append({
+            "model_name": m.model_name,
+            "tag": m.tag
+        })
+    return jsonify(grouped)
 
 
 @app.route("/history", methods=["GET"])

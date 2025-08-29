@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
 from openai import OpenAI, InternalServerError, RateLimitError
-from utils.retry_decorator import retry_request
-from managers.usage_manager import UsageManager
-from managers.llm_model_manager import LLMModelManager
-from database.models import PromptRecord
-from database import db
-from managers.resource_manager import ResourceManager
+from server.utils.retry_decorator import retry_request
+from server.managers.usage_manager import UsageManager
+from server.managers.llm_model_manager import LLMModelManager
+from server.database import db
+from server.database.models import PromptRecord
+from server.managers.resource_manager import ResourceManager
 from flask import current_app
 
 class ClientManager:
