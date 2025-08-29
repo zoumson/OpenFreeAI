@@ -1,10 +1,12 @@
 # server/app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint
 from server.database import db
 from server.database.models import LLMModel, PromptRecord
 from server.managers.client_manager import ClientManager
 from server.managers.llm_model_manager import LLMModelManager
 from server.managers.usage_manager import UsageManager
+
+APP_VERSION = "1.0.0"
 
 app = Flask(__name__)
 
@@ -22,10 +24,11 @@ usage_manager = UsageManager(model_manager=model_manager)
 client_manager = ClientManager(model_manager=model_manager, usage_manager=usage_manager)
 
 # ---------------------------
-# API endpoints
+# API v1 Blueprint
 # ---------------------------
+api_v1 = Blueprint("api_v1", __name__)
 
-@app.route("/prompt", methods=["POST"])
+@api_v1.route("/prompt", methods=["POST"])
 def send_prompt():
     data = request.get_json()
     prompt = data.get("prompt")
@@ -33,14 +36,13 @@ def send_prompt():
         return jsonify({"error": "Missing 'prompt'"}), 400
 
     try:
-        response = client_manager.get_completion(0, prompt)  # adjust index if needed
+        response = client_manager.get_completion(0, prompt)
     except IndexError:
         return jsonify({"error": "No models available. Load some models first."}), 400
 
     return jsonify({"response": response})
 
-
-@app.route("/model/load", methods=["POST"])
+@api_v1.route("/model/load", methods=["POST"])
 def load_model():
     data = request.get_json()
     path = data.get("path")
@@ -50,14 +52,12 @@ def load_model():
     count = model_manager.bulk_add_from_json(path)
     return jsonify({"message": f"Loaded {count} models from {path}"})
 
-
-@app.route("/model/list", methods=["GET"])
+@api_v1.route("/model/list", methods=["GET"])
 def list_models():
     models = [m.full_model for m in LLMModel.query.all()]
     return jsonify({"models": models})
 
-
-@app.route("/model/grouped", methods=["GET"])
+@api_v1.route("/model/grouped", methods=["GET"])
 def grouped_models():
     grouped = {}
     for m in LLMModel.query.all():
@@ -68,8 +68,7 @@ def grouped_models():
         })
     return jsonify(grouped)
 
-
-@app.route("/history", methods=["GET"])
+@api_v1.route("/history", methods=["GET"])
 def get_history():
     limit = request.args.get("limit", 50, type=int)
     model_name = request.args.get("model_name", type=str)
@@ -86,6 +85,12 @@ def get_history():
     ]
     return jsonify(history)
 
+@api_v1.route("/version", methods=["GET"])
+def get_version():
+    return jsonify({"version": APP_VERSION})
+
+# Register blueprint
+app.register_blueprint(api_v1, url_prefix="/api/v1")
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
