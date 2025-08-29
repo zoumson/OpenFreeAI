@@ -1,7 +1,8 @@
 # client/chat_client.py
 import requests
 import click
-from client.config import SERVER_URL  # Make sure config.py defines SERVER_URL
+import time
+from client.config import SERVER_URL  # SERVER_URL should be like "http://127.0.0.1:5000"
 
 @click.group()
 def cli():
@@ -9,35 +10,44 @@ def cli():
     pass
 
 # ---------------------------
-# Prompt command
+# Prompt command (producer)
 # ---------------------------
 @cli.command(help="Send a prompt to the LLM.")
 @click.option("--prompt", prompt="Enter your prompt", help="The input text prompt to send to the LLM.")
-@click.option("--model", default=None, help="Model name to use (optional).")
-@click.option("--stream", is_flag=True, help="Enable streaming mode for output.")
-def run(prompt, model, stream):
-    data = {"prompt": prompt}
-    if model:
-        data["model"] = model
+@click.option("--model-index", default=0, help="Index of model to use.")
+@click.option("--poll", is_flag=True, help="Poll until the result is ready.")
+@click.option("--interval", default=1.0, help="Polling interval in seconds.")
+def run(prompt, model_index, poll, interval):
+    data = {"prompt": prompt, "model_index": model_index}
+    try:
+        r = requests.post(f"{SERVER_URL}/api/v1/prompt", json=data)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        click.echo(f"[ERROR]: {e}")
+        return
 
-    url = f"{SERVER_URL}/prompt"
-    if stream:
-        with requests.post(url, json=data, stream=True) as r:
-            if r.status_code != 200:
-                click.echo(f"[ERROR]: {r.text}")
-                return
-            for chunk in r.iter_lines(decode_unicode=True):
-                if chunk:
-                    click.echo(chunk, nl=False)
-            click.echo()
-    else:
-        try:
-            r = requests.post(url, json=data)
-            r.raise_for_status()
-            resp = r.json()
-            click.echo(f"[COMPLETION]: {resp.get('response')}")
-        except requests.RequestException as e:
-            click.echo(f"[ERROR]: {e}")
+    job_info = r.json()
+    job_id = job_info.get("job_id")
+    click.echo(f"[INFO]: Task queued with job_id: {job_id}")
+
+    if poll:
+        click.echo("[INFO]: Polling for result...")
+        while True:
+            try:
+                res = requests.get(f"{SERVER_URL}/api/v1/job/{job_id}")
+                res.raise_for_status()
+                job_result = res.json()
+                status = job_result.get("status")
+                if status == "completed":
+                    click.echo(f"[COMPLETION]: {job_result.get('response')}")
+                    break
+                elif status == "failed":
+                    click.echo(f"[ERROR]: Job failed: {job_result.get('error')}")
+                    break
+                time.sleep(interval)
+            except requests.RequestException as e:
+                click.echo(f"[ERROR]: {e}")
+                break
 
 # ---------------------------
 # Model management commands
@@ -50,7 +60,7 @@ def model():
 @click.argument("json_file", type=click.Path(exists=True))
 def load(json_file):
     try:
-        r = requests.post(f"{SERVER_URL}/model/load", json={"path": json_file})
+        r = requests.post(f"{SERVER_URL}/api/v1/model/load", json={"path": json_file})
         r.raise_for_status()
         click.echo(r.json().get("message"))
     except requests.RequestException as e:
@@ -59,7 +69,7 @@ def load(json_file):
 @model.command("list", help="List all stored models.")
 def list_models():
     try:
-        r = requests.get(f"{SERVER_URL}/model/list")
+        r = requests.get(f"{SERVER_URL}/api/v1/model/list")
         r.raise_for_status()
         models = r.json().get("models", [])
         if not models:
@@ -74,7 +84,7 @@ def list_models():
 @model.command("grouped", help="List models grouped by provider.")
 def grouped_models():
     try:
-        r = requests.get(f"{SERVER_URL}/model/grouped")
+        r = requests.get(f"{SERVER_URL}/api/v1/model/grouped")
         r.raise_for_status()
         grouped = r.json()
         if not grouped:
@@ -93,7 +103,7 @@ def grouped_models():
 @cli.command(help="Get server API version.")
 def version():
     try:
-        r = requests.get(f"{SERVER_URL}/version")
+        r = requests.get(f"{SERVER_URL}/api/v1/version")
         r.raise_for_status()
         click.echo(f"Server version: {r.json().get('version')}")
     except requests.RequestException as e:
