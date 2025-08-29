@@ -6,8 +6,8 @@ from managers.usage_manager import UsageManager
 from managers.llm_model_manager import LLMModelManager
 from database.models import PromptRecord
 from database import db
-from app import app
 from managers.resource_manager import ResourceManager
+from flask import current_app
 
 class ClientManager:
     def __init__(self, model_manager: LLMModelManager, usage_manager: UsageManager, base_url="https://openrouter.ai/api/v1"):
@@ -34,8 +34,8 @@ class ClientManager:
         self.usage_manager.log_usage(model_name, len(content))
         ResourceManager.save_json(self.log_file, self.usage_manager.usage)
 
-        # Save to DB
-        with app.app_context():
+        # Save to DB inside app context
+        with current_app.app_context():
             record = PromptRecord(
                 prompt_text=prompt,
                 completion_text=content,
@@ -69,7 +69,8 @@ class ClientManager:
             self.usage_manager.log_usage(model_name, total_tokens)
             ResourceManager.save_json(self.log_file, self.usage_manager.usage)
 
-            with app.app_context():
+            # Save to DB inside app context
+            with current_app.app_context():
                 record = PromptRecord(
                     prompt_text=prompt,
                     completion_text="".join(collected),

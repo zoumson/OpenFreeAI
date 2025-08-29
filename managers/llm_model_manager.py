@@ -1,15 +1,15 @@
 import json
-from database.models import LLMModel
 from database import db
-from app import app
+from database.models import LLMModel
+from flask import current_app
 
 class LLMModelManager:
     def __init__(self):
-        with app.app_context():
-            db.create_all()
+        # tables should already exist; no app import needed
+        pass
 
     def add_model(self, full_model=None, provider=None, model_name=None, tag=None):
-        with app.app_context():
+        with current_app.app_context():
             if not full_model:
                 full_model = f"{provider}/{model_name}:{tag}"
             existing = LLMModel.query.filter_by(full_model=full_model).first()
@@ -18,12 +18,7 @@ class LLMModelManager:
             provider_val = provider or full_model.split("/")[0]
             model_val = model_name or full_model.split("/")[1].split(":")[0]
             tag_val = tag or full_model.split(":")[1] if ":" in full_model else ""
-            new_model = LLMModel(
-                full_model=full_model,
-                provider=provider_val,
-                model_name=model_val,
-                tag=tag_val
-            )
+            new_model = LLMModel(full_model=full_model, provider=provider_val, model_name=model_val, tag=tag_val)
             db.session.add(new_model)
             db.session.commit()
             return True
@@ -39,11 +34,11 @@ class LLMModelManager:
         return count
 
     def get_models(self):
-        with app.app_context():
+        with current_app.app_context():
             return [m.full_model for m in LLMModel.query.all()]
 
     def get_grouped_models(self):
-        with app.app_context():
+        with current_app.app_context():
             grouped = {}
             for m in LLMModel.query.all():
                 grouped.setdefault(m.provider, []).append({"model_name": m.model_name, "tag": m.tag})
