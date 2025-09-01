@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   redis:
     image: redis:7
@@ -16,21 +18,23 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY} # <-- pass host env var
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - redis
 
-  worker:
+  celery_worker:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rq_worker
+    container_name: celery_worker
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY} # <-- pass host env var
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - redis
       - web
-    command: ['python', 'server/jobs/consumer.py']
+    command: >
+      celery -A server.infrastructure.celery_app.celery_app
+      worker --loglevel=info --autoscale=10,3

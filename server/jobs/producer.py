@@ -1,14 +1,8 @@
 # server/jobs/producer.py
 from flask import Blueprint, request, jsonify, current_app
-from redis import Redis
-from rq import Queue
-from rq.job import Job
 from server.config import Config
 from server.jobs.tasks import process_prompt
-
-# Redis connection & queue
-redis_conn = Redis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
-q = Queue(Config.QUEUE_NAME, connection=redis_conn)
+from celery.result import AsyncResult
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -25,23 +19,24 @@ def send_prompt():
     if not prompt:
         return jsonify({"error": "Missing 'prompt'"}), 400
 
-    # Enqueue task
-    job = q.enqueue(process_prompt, prompt, model_index, stream)
-    return jsonify({"job_id": job.get_id(), "status": "queued"})
+    # Enqueue Celery task
+    task = process_prompt.apply_async(args=[prompt, model_index, stream])
+    return jsonify({"task_id": task.id, "status": "queued"})
 
 
 # ---------------------------
 # Job status endpoint
 # ---------------------------
-@api_v1.route("/job/<job_id>", methods=["GET"])
-def get_job(job_id):
+@api_v1.route("/job/<task_id>", methods=["GET"])
+def get_job(task_id):
     try:
-        job = Job.fetch(job_id, connection=redis_conn)
-        return jsonify({
-            "id": job.id,
-            "status": job.get_status(),
-            "result": job.result if job.is_finished else None
-        })
+        task_result = AsyncResult(task_id)
+        response = {
+            "id": task_result.id,
+            "status": task_result.status,
+            "result": task_result.result if task_result.ready() else None
+        }
+        return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 
