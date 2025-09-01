@@ -14,8 +14,8 @@ COPY . .
 # Set PYTHONPATH so 'server' is importable
 ENV PYTHONPATH=/app
 
-# Expose port
+# Expose port (web will use it)
 EXPOSE 5000
 
-# Default command to run Flask
+# Default command (can be overridden by docker-compose)
 CMD ["python", "server/app.py"]
