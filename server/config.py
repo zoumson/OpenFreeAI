@@ -15,12 +15,15 @@ class Config:
     REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
     REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 
-    # App version
-    APP_VERSION = "1.0.0"
+    # Flask server host & port (server-side only)
+    FLASK_HOST = os.environ.get("FLASK_HOST", "0.0.0.0")  # bind to all interfaces inside container
+    FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
 
     # Optional: queue name
     QUEUE_NAME = os.environ.get("QUEUE_NAME", "prompts")
 
-    # **Add this**
+    # Optional API prefix
     API_PREFIX = "/api/v1"
 
+    # App version
+    APP_VERSION = "1.0.0"

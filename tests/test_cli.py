@@ -1,7 +1,7 @@
 import pytest
 import json
 from click.testing import CliRunner
-from chat_client import cli
+from ProjectTest1.clients.chat_client import cli
 from managers.llm_model_manager import app, db
 
 @pytest.fixture

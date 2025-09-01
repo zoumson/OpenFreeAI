@@ -1,31 +1,20 @@
-from server.managers.llm_model_manager import LLMModelManager
-from server.database import db
-from server.database.models import PromptRecord
+from flask import current_app
 
-# Initialize the model manager
-model_manager = LLMModelManager()
-
-def process_prompt(prompt: str, model_index: int = 0):
+def process_prompt(prompt: str, model_index: int = 0, stream: bool = False):
     """
     Worker task to process a prompt from the queue.
-    Stores result in the database.
+    Runs automatically inside the Flask app context.
     """
     try:
-        # Get completion from the model
-        completion = model_manager.get_completion(model_index, prompt)
+        client_manager = current_app.client_manager
 
-        # Save to DB
-        with db.app.app_context():
-            record = PromptRecord(
-                prompt_text=prompt,
-                completion_text=completion,
-                model_name=model_manager.get_model_name(model_index),
-                streamed=False
-            )
-            db.session.add(record)
-            db.session.commit()
-
-        return completion
+        if stream:
+            collected = []
+            for chunk in client_manager.get_reply(model_index, prompt):
+                collected.append(chunk)
+            return "".join(collected)
+        else:
+            return client_manager.get_completion(model_index, prompt)
 
     except IndexError:
         return "Error: No models available. Load models first."
