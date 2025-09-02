@@ -38,4 +38,4 @@ services:
     depends_on:
       - redis
       - web
-    command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --concurrency=3
+    command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --autoscale=10,3
