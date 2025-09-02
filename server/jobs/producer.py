@@ -1,16 +1,17 @@
-# server/jobs/producer.py
 from flask import Blueprint, request, jsonify, current_app
 from server.config import Config
-from server.jobs.tasks import process_prompt
+from server.infrastructure.celery_app import celery_app
 from celery.result import AsyncResult
 
 api_v1 = Blueprint("api_v1", __name__)
 
 # ---------------------------
-# Prompt endpoint (Producer)
+# Prompt endpoint
 # ---------------------------
 @api_v1.route("/prompt", methods=["POST"])
 def send_prompt():
+    from server.jobs.tasks import process_prompt  # local import to avoid circular import
+
     data = request.get_json()
     prompt = data.get("prompt")
     model_index = data.get("model_index", 0)
@@ -25,12 +26,12 @@ def send_prompt():
 
 
 # ---------------------------
-# Job status endpoint
+# Job status / result endpoint
 # ---------------------------
 @api_v1.route("/job/<task_id>", methods=["GET"])
 def get_job(task_id):
     try:
-        task_result = AsyncResult(task_id)
+        task_result = AsyncResult(task_id, app=celery_app)
         response = {
             "id": task_result.id,
             "status": task_result.status,

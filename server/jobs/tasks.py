@@ -1,19 +1,18 @@
 # server/jobs/tasks.py
 from server.infrastructure.celery_app import celery_app
-from server.app import create_app
+from server.app import create_app  # Flask factory
 
-# Create Flask app instance
-flask_app = create_app()
+# create a global Flask app instance for Celery
+app = create_app()
 
 @celery_app.task(name="process_prompt")
 def process_prompt(prompt: str, model_index: int = 0, stream: bool = False):
     """
-    Celery worker task to process a prompt.
-    Runs inside the Flask app context.
+    Process a prompt using the ClientManager inside Flask app context.
     """
-    with flask_app.app_context():
+    with app.app_context():  # <-- use app.app_context(), not current_app
         try:
-            client_manager = flask_app.client_manager
+            client_manager = app.client_manager
 
             if stream:
                 collected = []

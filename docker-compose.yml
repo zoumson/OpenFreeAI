@@ -19,8 +19,11 @@ services:
       - REDIS_PORT=6379
       - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - FLASK_APP=server.app:create_app
+      - FLASK_ENV=development
     depends_on:
       - redis
+    command: flask run --host=0.0.0.0 --port=5000
 
   celery_worker:
     build:
@@ -35,6 +38,4 @@ services:
     depends_on:
       - redis
       - web
-    command: >
-      celery -A server.infrastructure.celery_app.celery_app
-      worker --loglevel=info --autoscale=10,3
+    command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --concurrency=3

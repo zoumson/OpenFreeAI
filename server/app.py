@@ -1,4 +1,3 @@
-# server/app.py
 from flask import Flask
 from server.database import db
 from server.jobs.producer import api_v1 as producer_api
@@ -14,7 +13,7 @@ def create_app():
     with app.app_context():
         db.create_all()
 
-    # Create and attach a single ClientManager instance
+    # Attach ClientManager
     app.client_manager = ClientManager()
 
     # Register blueprint
@@ -27,8 +26,6 @@ def create_app():
 
     return app
 
-
-# Entry point for running server directly
 if __name__ == "__main__":
     app = create_app()
     app.run(host=Config.FLASK_HOST, port=Config.FLASK_PORT, debug=True)
