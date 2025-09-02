@@ -39,3 +39,4 @@ services:
       - redis
       - web
     command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --autoscale=10,3
+    #docker-compose up --scale celery_worker=3
