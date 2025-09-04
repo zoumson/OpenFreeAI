@@ -49,9 +49,11 @@ def get_job(task_id):
 def load_model():
     data = request.get_json()
     path = data.get("path")
+
     if not path:
         return jsonify({"error": "Missing 'path'"}), 400
 
+    # Add models to DB and shared JSON
     count = current_app.client_manager.model_manager.bulk_add_from_json(path)
     return jsonify({"message": f"Loaded {count} models from {path}"})
 

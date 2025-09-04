@@ -4,8 +4,9 @@ services:
   redis:
     image: redis:7
     container_name: redis
-    ports:
-      - '6379:6379'
+    # Remove ports if only internal
+    # ports:
+    #   - '6379:6379'
 
   web:
     build:
@@ -14,10 +15,13 @@ services:
     container_name: flask_server
     ports:
       - '5000:5000'
+    volumes:
+      - ./server/shared:/app/server/shared
+      - ./data:/app/data
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
+      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/models.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FLASK_APP=server.app:create_app
       - FLASK_ENV=development
@@ -30,13 +34,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: celery_worker
+    volumes:
+      - ./server/shared:/app/server/shared
+      - ./data:/app/data
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
+      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/models.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - redis
-      - web
     command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --autoscale=10,3
-    #docker-compose up --scale celery_worker=3
