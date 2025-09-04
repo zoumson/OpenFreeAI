@@ -21,7 +21,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/models.db
+      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/llm.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FLASK_APP=server.app:create_app
       - FLASK_ENV=development
@@ -40,7 +40,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/models.db
+      - SQLALCHEMY_DATABASE_URI=sqlite:////app/data/llm.db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - redis

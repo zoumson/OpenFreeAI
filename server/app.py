@@ -3,6 +3,7 @@ from server.database import db
 from server.jobs.producer import api_v1 as producer_api
 from server.managers.client_manager import ClientManager
 from server.config import Config
+import os 
 
 def create_app():
     app = Flask(__name__)
@@ -12,6 +13,16 @@ def create_app():
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+    # db_path = Config.SQLALCHEMY_DATABASE_URI.replace("sqlite:///", "")
+    # if os.path.exists(db_path):
+    #     os.remove(db_path)
+
+    # app = create_app()
+    # with app.app_context():
+    #     db.create_all()
+
+
 
     # Attach ClientManager
     app.client_manager = ClientManager()

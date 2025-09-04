@@ -12,7 +12,7 @@ class LLMModelManager:
     def __init__(self):
         # Tables are created once in app.py with db.create_all()
         self.shared_dir = Config.SHARED_DIR
-        self.json_file = os.path.join(self.shared_dir, "models.json")
+        self.json_file = os.path.join(self.shared_dir, "llm_models.json")
 
     def add_model(self, full_model=None, provider=None, model_name=None, tag=None):
         """

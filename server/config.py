@@ -10,7 +10,7 @@ class Config:
     # -----------------------------
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "SQLALCHEMY_DATABASE_URI",
-        f"sqlite:///{os.path.join(DATA_DIR, 'models.db')}"
+        f"sqlite:///{os.path.join(DATA_DIR, 'llm.db')}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
