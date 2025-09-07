@@ -23,7 +23,7 @@ def job():
 
 @job.command("submit", help="Submit a prompt as a job.")
 @click.option("--prompt", required=True, help="The input text prompt to send to the LLM.")
-@click.option("--model-index", default=0, help="Index of the model to use.")
+@click.option("--model-index", default=5, help="Index of the model to use.")
 @click.option("--stream", is_flag=True, default=False, help="Enable streaming output.")
 def submit(prompt, model_index, stream):
     payload = {"prompt": prompt, "model_index": model_index, "stream": stream}
