@@ -5,6 +5,12 @@ from server.managers.client_manager import ClientManager
 from server.config import Config
 
 def create_app():
+    api_key = Config.OPENAI_API_KEY
+
+    # if api_key:
+    #     print(f"OPENAI_API_KEY loaded ✅ (...{api_key[:6]})")
+    # else:
+    #     print("⚠️ OPENAI_API_KEY is missing!")
     app = Flask(__name__)
     app.config.from_object(Config)
 

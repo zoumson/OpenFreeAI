@@ -3,40 +3,31 @@ version: '3.9'
 services:
   redis:
     image: redis:7
-    container_name: redis
+    container_name: ${REDIS_CONT}
     ports:
-      - '6379:6379'
+      - '${REDIS_PORT}:${REDIS_PORT}'
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: flask_server
+    container_name: ${FLASK_CONT}
+    env_file:
+      - .env
     ports:
-      - '5000:5000'
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - FLASK_APP=server.app:create_app
-      - FLASK_ENV=development
+      - '${FLASK_PORT}:${FLASK_PORT}'
     depends_on:
       - redis
-    command: flask run --host=0.0.0.0 --port=5000
+    command: flask run --host=${FLASK_HOST} --port=${FLASK_PORT}
 
   celery_worker:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: celery_worker
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - SQLALCHEMY_DATABASE_URI=sqlite:///models.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    container_name: ${CELERY_CONT}
+    env_file:
+      - .env
     depends_on:
       - redis
       - web
-    command: celery -A server.infrastructure.celery_app.celery_app worker --loglevel=info --autoscale=10,3
-    #docker-compose up --scale celery_worker=3
+    command: celery -A ${CELERY_APP} worker --loglevel=info --autoscale=${CELERY_AUTOSCALE}

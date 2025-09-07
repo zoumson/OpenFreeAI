@@ -1,29 +1,58 @@
 import os
+from dotenv import load_dotenv
+
+# Load .env (override ensures any existing env vars are replaced)
+load_dotenv(override=True)
+
+def get_env_var(name: str, cast=str) -> any:
+    """Get an environment variable, enforce existence, and cast type."""
+    value = os.environ.get(name)
+    if value is None:
+        raise RuntimeError(f"Environment variable '{name}' is required but not set.")
+    
+    try:
+        if cast == bool:
+            # Accept 'True', 'true', '1' as True; 'False', 'false', '0' as False
+            value_lower = value.lower()
+            if value_lower in ("true", "1"):
+                return True
+            elif value_lower in ("false", "0"):
+                return False
+            else:
+                raise ValueError()
+        return cast(value)
+    except ValueError:
+        raise RuntimeError(f"Environment variable '{name}' must be of type {cast.__name__}, got '{value}'")
 
 class Config:
     # Flask & SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///models.db")
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = get_env_var("SQLALCHEMY_DATABASE_URI")
+    SQLALCHEMY_TRACK_MODIFICATIONS = get_env_var("SQLALCHEMY_TRACK_MODIFICATIONS", bool)
 
-    # LLM API key
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+    # LLM API
+    OPENAI_API_KEY = get_env_var("OPENAI_API_KEY")
+    LLM_BASE_URL = get_env_var("LLM_BASE_URL")
 
-    # Base URL for LLM API
-    LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1")
+    # Redis
+    REDIS_CONT = get_env_var("REDIS_CONT")
+    REDIS_HOST = get_env_var("REDIS_HOST")
+    REDIS_PORT = get_env_var("REDIS_PORT", int)
+    QUEUE_NAME = get_env_var("QUEUE_NAME")
 
-    # Redis config
-    REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-    REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+    # Flask server
+    FLASK_CONT = get_env_var("FLASK_CONT")
+    FLASK_APP = get_env_var("FLASK_APP")
+    FLASK_ENV = get_env_var("FLASK_ENV")
+    FLASK_HOST = get_env_var("FLASK_HOST")
+    FLASK_PORT = get_env_var("FLASK_PORT", int)
 
-    # Flask server host & port (server-side only)
-    FLASK_HOST = os.environ.get("FLASK_HOST", "0.0.0.0")  # bind to all interfaces inside container
-    FLASK_PORT = int(os.environ.get("FLASK_PORT", 5000))
+    # Celery
+    CELERY_CONT = get_env_var("CELERY_CONT")
+    CELERY_AUTOSCALE = get_env_var("CELERY_AUTOSCALE")  # format: "max,min"
+    CELERY_APP = get_env_var("CELERY_APP")
 
-    # Optional: queue name
-    QUEUE_NAME = os.environ.get("QUEUE_NAME", "prompts")
-
-    # Optional API prefix
-    API_PREFIX = "/api/v1"
+    # API
+    API_PREFIX = get_env_var("API_PREFIX")
 
     # App version
-    APP_VERSION = "1.0.0"
+    APP_VERSION = get_env_var("APP_VERSION")
