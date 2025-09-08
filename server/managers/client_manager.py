@@ -11,6 +11,15 @@ from server.database import db
 from server.database.models import PromptRecord
 from flask import current_app
 
+
+from flagchat4 import (
+    set_client as fc_set_client,       # Set the client object to use (default uses openai module)
+    get_reply as fc_get_reply,         # Return a reply given a list of messages
+    chat as fc_chat,                   # Input system and user messages, returns reply while recording conversation history
+    tools_table as fc_tools_table,     # Reference table of available tool functions (default includes Google search)
+    set_backtrace as fc_set_backtrace, # Set how many conversation turns to record (default: 2)
+    empty_history as fc_empty_history, # Clear conversation history
+)
 class ClientManager:
     def __init__(self, base_url="https://openrouter.ai/api/v1"):
         # Initialize API key
@@ -20,6 +29,9 @@ class ClientManager:
 
         # OpenAI client
         self.client = OpenAI(base_url=base_url)
+
+        # Register FlashChat client
+        fc_set_client(self.client)
 
         # Resolve usage.json
         usage_path = os.path.abspath(Config.PATH_USAGE)
@@ -106,3 +118,21 @@ class ClientManager:
             yield f"[ERROR]: {err}"
         except Exception as e:
             yield f"[ERROR]: {e}"
+
+        
+    @retry_request(retries=5, backoff_factor=2)
+    def get_conversation(self, model_index: int, prompt: str):
+        """
+        Stream conversation from FlashChat and save full text to DB.
+        The 'streamed' flag is always False.
+        """
+        model_name = self.model_manager.get_models()[model_index]
+        collected = []
+
+        # FlashChat streaming loop
+        for chunk in fc_chat("system: assistant", prompt):
+            collected.append(chunk)
+            yield chunk  # streaming to caller
+
+        # Save full response to DB
+        self._save_to_db(prompt, "".join(collected), model_name, streamed=False)
