@@ -25,9 +25,13 @@ def get_env_var(name: str, cast=str) -> any:
         raise RuntimeError(f"Environment variable '{name}' must be of type {cast.__name__}, got '{value}'")
 
 class Config:
-    # Flask & SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = get_env_var("SQLALCHEMY_DATABASE_URI")
-    SQLALCHEMY_TRACK_MODIFICATIONS = get_env_var("SQLALCHEMY_TRACK_MODIFICATIONS", bool)
+    # --- Database setup ---
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+    os.makedirs(INSTANCE_DIR, exist_ok=True)
+
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_DIR, 'models.db')}"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # LLM API
     OPENAI_API_KEY = get_env_var("OPENAI_API_KEY")
@@ -37,14 +41,20 @@ class Config:
     REDIS_CONT = get_env_var("REDIS_CONT")
     REDIS_HOST = get_env_var("REDIS_HOST")
     REDIS_PORT = get_env_var("REDIS_PORT", int)
+    REDIS_PASSWORD = get_env_var("REDIS_PASSWORD")
     QUEUE_NAME = get_env_var("QUEUE_NAME")
 
     # Flask server
     FLASK_CONT = get_env_var("FLASK_CONT")
     FLASK_APP = get_env_var("FLASK_APP")
     FLASK_ENV = get_env_var("FLASK_ENV")
+    APP_ENV = get_env_var("APP_ENV")
     FLASK_HOST = get_env_var("FLASK_HOST")
     FLASK_PORT = get_env_var("FLASK_PORT", int)
+
+    # For Gunicorn production server
+    GUNICORN_APP = get_env_var("GUNICORN_APP")
+    GUNICORN_WORKERS = get_env_var("GUNICORN_WORKERS", int)
 
     # Celery
     CELERY_CONT = get_env_var("CELERY_CONT")
@@ -56,3 +66,7 @@ class Config:
 
     # App version
     APP_VERSION = get_env_var("APP_VERSION")
+
+    PATH_USAGE = get_env_var("PATH_USAGE")
+    PATH_LOG = get_env_var("PATH_LOG")
+   
