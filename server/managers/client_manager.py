@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from openai import OpenAI, InternalServerError, RateLimitError
+from server.config import Config
 from server.utils.retry_decorator import retry_request
 from server.managers.usage_manager import UsageManager
 from server.managers.llm_model_manager import LLMModelManager
@@ -20,10 +21,18 @@ class ClientManager:
         # OpenAI client
         self.client = OpenAI(base_url=base_url)
 
+        # Resolve usage.json
+        usage_path = os.path.abspath(Config.PATH_USAGE)
+        os.makedirs(os.path.dirname(usage_path), exist_ok=True)
+
+        # Resolve client_logs.json
+        log_path = os.path.abspath(Config.PATH_LOG)
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
         # Managers
         self.model_manager = LLMModelManager()
-        self.usage_manager = UsageManager()
-        self.log_file = Path("client_logs.json")
+        self.usage_manager = UsageManager(file_path=usage_path)
+        self.log_file = Path(log_path)
 
         # Load existing usage logs if any
         if self.log_file.exists():
