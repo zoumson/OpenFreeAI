@@ -6,9 +6,9 @@ from celery.result import AsyncResult
 api_v1 = Blueprint("api_v1", __name__)
 
 # ---------------------------
-# Prompt endpoint
+# Job submission endpoints
 # ---------------------------
-@api_v1.route("/prompt", methods=["POST"])
+@api_v1.route("/job/prompt", methods=["POST"])
 def send_prompt():
     from server.jobs.tasks import process_prompt  # local import to avoid circular import
 
@@ -22,6 +22,22 @@ def send_prompt():
 
     # Enqueue Celery task
     task = process_prompt.apply_async(args=[prompt, model_index, stream])
+    return jsonify({"task_id": task.id, "status": "queued"})
+
+
+@api_v1.route("/job/conversation", methods=["POST"])
+def conversation():
+    from server.jobs.tasks import process_conversation
+
+    data = request.get_json()
+    message = data.get("prompt")  # keep backend key 'prompt' for consistency
+    model_index = data.get("model_index", 0)
+
+    if not message:
+        return jsonify({"error": "Missing 'prompt'"}), 400
+
+    # Enqueue the conversation task
+    task = process_conversation.apply_async(args=[message, model_index])
     return jsonify({"task_id": task.id, "status": "queued"})
 
 
