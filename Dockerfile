@@ -4,12 +4,23 @@ FROM python:3.11-slim
 # Set workdir
 WORKDIR /app
 
-# Copy requirements and install
+# Copy requirements first (caching layer)
 COPY requirements.txt .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the app code
+# Copy the rest of the code
 COPY . .
+
+# Create a non-root user for security
+RUN useradd -ms /bin/bash adama
+
+# Create instance folder and fix permissions
+RUN mkdir -p /app/server/instance && chown -R adama:adama /app/server/instance
+
+# Switch to non-root user
+USER adama
 
 # Set PYTHONPATH so 'server' is importable
 ENV PYTHONPATH=/app
@@ -17,5 +28,5 @@ ENV PYTHONPATH=/app
 # Expose port (web will use it)
 EXPOSE 5000
 
-# Default command (can be overridden by docker-compose)
-CMD ["python", "server/app.py"]
+# Entrypoint is handled by docker-compose command
+CMD ["sh", "-c", "echo 'Container started'"]
