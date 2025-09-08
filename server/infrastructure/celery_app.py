@@ -3,8 +3,8 @@ from server.config import Config
 
 celery_app = Celery(
     "server",
-    broker=f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/0",
-    backend=f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/1"
+    broker=f"redis://:{Config.REDIS_PASSWORD}@{Config.REDIS_HOST}:{Config.REDIS_PORT}/0",
+    backend=f"redis://:{Config.REDIS_PASSWORD}@{Config.REDIS_HOST}:{Config.REDIS_PORT}/1"
 )
 
 celery_app.conf.update(
