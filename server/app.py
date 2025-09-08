@@ -5,12 +5,7 @@ from server.managers.client_manager import ClientManager
 from server.config import Config
 
 def create_app():
-    api_key = Config.OPENAI_API_KEY
-
-    # if api_key:
-    #     print(f"OPENAI_API_KEY loaded ✅ (...{api_key[:6]})")
-    # else:
-    #     print("⚠️ OPENAI_API_KEY is missing!")
+    
     app = Flask(__name__)
     app.config.from_object(Config)
 
@@ -31,7 +26,6 @@ def create_app():
         return {"message": f"LLM Flask Server v{Config.APP_VERSION}"}, 200
 
     return app
+# <<< ADD THIS for Gunicorn >>> 
+app = create_app()
 
-if __name__ == "__main__":
-    app = create_app()
-    app.run(host=Config.FLASK_HOST, port=Config.FLASK_PORT, debug=True)
