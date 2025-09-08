@@ -2,9 +2,21 @@ import requests
 import click
 from client.config import SERVER_URL, API_PREFIX
 
+
 def api_url(path: str) -> str:
     """Build the full API URL."""
     return f"{SERVER_URL}{API_PREFIX}{path}"
+
+
+def submit_job(endpoint: str, payload: dict):
+    """Helper to submit a job to the server and print task ID."""
+    try:
+        resp = requests.post(api_url(endpoint), json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        click.echo(f"[INFO]: Job submitted. Task ID: {data.get('task_id')}")
+    except requests.RequestException as e:
+        click.echo(f"[ERROR]: Failed to submit job → {e}")
 
 
 @click.group()
@@ -21,19 +33,21 @@ def job():
     pass
 
 
-@job.command("submit", help="Submit a prompt as a job.")
+@job.command("prompt", help="Submit a text prompt as a job.")
 @click.option("--prompt", required=True, help="The input text prompt to send to the LLM.")
 @click.option("--model-index", default=5, help="Index of the model to use.")
 @click.option("--stream", is_flag=True, default=False, help="Enable streaming output.")
-def submit(prompt, model_index, stream):
+def submit_prompt(prompt, model_index, stream):
     payload = {"prompt": prompt, "model_index": model_index, "stream": stream}
-    try:
-        resp = requests.post(api_url("/prompt"), json=payload)
-        resp.raise_for_status()
-        data = resp.json()
-        click.echo(f"[INFO]: Job submitted. ID: {data.get('task_id')}")
-    except requests.RequestException as e:
-        click.echo(f"[ERROR]: Failed to submit job → {e}")
+    submit_job("/job/prompt", payload)
+
+
+@job.command("conversation", help="Submit a conversation prompt as a job.")
+@click.option("--message", required=True, help="The input message for the conversation.")
+@click.option("--model-index", default=0, help="Index of the model to use.")
+def submit_conversation(message, model_index):
+    payload = {"prompt": message, "model_index": model_index}
+    submit_job("/job/conversation", payload)
 
 
 @job.command("status", help="Check the status of a job.")
