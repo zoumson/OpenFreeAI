@@ -1,0 +1,3 @@
+[submodule "flagchat4"]
+	path = flagchat4
+	url = https://github.com/FlagTech/flagchat4.git
