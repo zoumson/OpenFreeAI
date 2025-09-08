@@ -1,11 +1,18 @@
-version: '3.9'
-
 services:
   redis:
     image: redis:7
     container_name: ${REDIS_CONT}
     ports:
       - '${REDIS_PORT}:${REDIS_PORT}'
+    command:
+      - redis-server
+      - /usr/local/etc/redis/redis.conf
+      - '--port'
+      - '${REDIS_PORT}'
+      - '--requirepass'
+      - '${REDIS_PASSWORD}'
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
 
   web:
     build:
@@ -18,8 +25,26 @@ services:
       - '${FLASK_PORT}:${FLASK_PORT}'
     depends_on:
       - redis
-    command: flask run --host=${FLASK_HOST} --port=${FLASK_PORT}
+    volumes:
+      - ./data:/app/data
+      - ./server/instance:/app/server/instance
+    command:
+      - gunicorn
+      - '-w'
+      - '${GUNICORN_WORKERS}'
+      - '-b'
+      - '${FLASK_HOST}:${FLASK_PORT}'
+      - '${GUNICORN_APP}'
 
+    # command: flask run --host=${FLASK_HOST} --port=${FLASK_PORT}
+    # command: >
+    #   sh -c "
+    #   if [ '$$APP_ENV' = 'production' ]; then
+    #     gunicorn -w 4 -b ${FLASK_HOST}:${FLASK_PORT} '${FLASK_APP}';
+    #   else
+    #     flask run --host=${FLASK_HOST} --port=${FLASK_PORT};
+    #   fi
+    # "
   celery_worker:
     build:
       context: .
@@ -30,4 +55,13 @@ services:
     depends_on:
       - redis
       - web
-    command: celery -A ${CELERY_APP} worker --loglevel=info --autoscale=${CELERY_AUTOSCALE}
+    volumes:
+      - ./data:/app/data
+      - ./server/instance:/app/server/instance
+    command:
+      - 'celery'
+      - '-A'
+      - '${CELERY_APP}'
+      - 'worker'
+      - '--loglevel=info'
+      - '--autoscale=${CELERY_AUTOSCALE}'
