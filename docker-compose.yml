@@ -1,4 +1,18 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: ${MYSQL_CONT}
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - '${MYSQL_PORT_EXT}:${MYSQL_PORT_INT}'
+    volumes:
+      - ./data/mysql_db:/var/lib/mysql
+
   redis:
     image: redis:7
     container_name: ${REDIS_CONT}
@@ -24,17 +38,32 @@ services:
     ports:
       - '${FLASK_PORT}:${FLASK_PORT}'
     depends_on:
+      - mysql
       - redis
     volumes:
       - ./data:/app/data
-      - ./server/instance:/app/server/instance
     command:
+      - dockerize
+      - -wait
+      - 'tcp://${MYSQL_CONT}:${MYSQL_PORT_INT}'
+      - -wait
+      - 'tcp://${REDIS_CONT}:${REDIS_PORT}'
+      - -timeout
+      - '60s'
       - gunicorn
-      - '-w'
+      - -w
       - '${GUNICORN_WORKERS}'
-      - '-b'
+      - -b
       - '${FLASK_HOST}:${FLASK_PORT}'
       - '${GUNICORN_APP}'
+
+    # command:
+    #   - gunicorn
+    #   - '-w'
+    #   - '${GUNICORN_WORKERS}'
+    #   - '-b'
+    #   - '${FLASK_HOST}:${FLASK_PORT}'
+    #   - '${GUNICORN_APP}'
 
     # command: flask run --host=${FLASK_HOST} --port=${FLASK_PORT}
     # command: >
@@ -57,11 +86,24 @@ services:
       - web
     volumes:
       - ./data:/app/data
-      - ./server/instance:/app/server/instance
     command:
-      - 'celery'
-      - '-A'
+      - dockerize
+      - -wait
+      - 'tcp://${MYSQL_CONT}:${MYSQL_PORT_INT}'
+      - -wait
+      - 'tcp://${REDIS_CONT}:${REDIS_PORT}'
+      - -timeout
+      - '60s'
+      - celery
+      - -A
       - '${CELERY_APP}'
-      - 'worker'
-      - '--loglevel=info'
-      - '--autoscale=${CELERY_AUTOSCALE}'
+      - worker
+      - --loglevel=info
+      - --autoscale=${CELERY_AUTOSCALE}
+    # command:
+    #   - 'celery'
+    #   - '-A'
+    #   - '${CELERY_APP}'
+    #   - 'worker'
+    #   - '--loglevel=info'
+    #   - '--autoscale=${CELERY_AUTOSCALE}'
