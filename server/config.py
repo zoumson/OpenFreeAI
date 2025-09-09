@@ -25,12 +25,18 @@ def get_env_var(name: str, cast=str) -> any:
         raise RuntimeError(f"Environment variable '{name}' must be of type {cast.__name__}, got '{value}'")
 
 class Config:
-    # --- Database setup ---
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
-    os.makedirs(INSTANCE_DIR, exist_ok=True)
+    # # --- Database setup ---
+    # BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    # INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+    # os.makedirs(INSTANCE_DIR, exist_ok=True)
 
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_DIR, 'models.db')}"
+    # SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(INSTANCE_DIR, 'models.db')}"
+    # SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # --- Database setup (MySQL) ---
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://{get_env_var('MYSQL_USER')}:{get_env_var('MYSQL_PASSWORD')}"
+        f"@{get_env_var('MYSQL_HOST')}:{get_env_var('MYSQL_PORT_INT')}/{get_env_var('MYSQL_DATABASE')}"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # LLM API
