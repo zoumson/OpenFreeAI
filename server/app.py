@@ -9,10 +9,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize database
+   # Initialize database
     db.init_app(app)
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.error(f"Database initialization failed: {e}")
 
     # Attach ClientManager
     app.client_manager = ClientManager()
