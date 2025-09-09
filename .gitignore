@@ -26,6 +26,10 @@ Thumbs.db
 # - setup_api_key.md
 
 # Ignore LLM model and prompt files
-prompts.json
-client_logs.json
-usage.json
+# prompts.json
+# client_logs.json
+# usage.json
+
+# Ignore MySQL data files
+# data/mysql_db/
+data/
