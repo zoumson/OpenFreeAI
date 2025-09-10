@@ -71,6 +71,18 @@ def load_model():
     count = current_app.client_manager.model_manager.bulk_add_from_json(path)
     return jsonify({"message": f"Loaded {count} models from {path}"})
 
+@api_v1.route("/model/upload", methods=["POST"])
+def upload_model():
+    """Accept JSON models directly in the request body."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+
+    try:
+        count = current_app.client_manager.model_manager.bulk_add_from_dict(data)
+        return jsonify({"message": f"Uploaded {count} models successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @api_v1.route("/model/list", methods=["GET"])
 def list_models():
@@ -83,6 +95,14 @@ def grouped_models():
     grouped = current_app.client_manager.model_manager.get_grouped_models()
     return jsonify(grouped)
 
+@api_v1.route("/model/clear", methods=["POST"])
+def clear_models():
+    try:
+        count = len(current_app.client_manager.model_manager.get_models())
+        current_app.client_manager.model_manager.clear_models()
+        return jsonify({"message": f"Cleared {count} models"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ---------------------------
 # History endpoint
