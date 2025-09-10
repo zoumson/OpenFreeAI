@@ -1,7 +1,7 @@
 import requests
 import click
 from client.config import SERVER_URL, API_PREFIX
-
+import json
 
 def api_url(path: str) -> str:
     """Build the full API URL."""
@@ -98,6 +98,38 @@ def load(path):
     except requests.RequestException as e:
         click.echo(f"[ERROR]: Failed to load models → {e}")
 
+@model.command("upload", help="Upload models in JSON format over HTTP.")
+@click.option("--file", type=click.Path(exists=True), help="Path to JSON file to upload.")
+@click.option("--json-data", type=str, help="Raw JSON string to upload.")
+def upload(file, json_data):
+    if not file and not json_data:
+        click.echo("[ERROR]: Provide either --file or --json-data")
+        return
+
+    try:
+        if file:
+            with open(file, "r") as f:
+                data = json.load(f)
+        else:
+            data = json.loads(json_data)
+
+        resp = requests.post(api_url("/model/upload"), json=data)
+        resp.raise_for_status()
+        click.echo(f"[INFO]: {resp.json().get('message')}")
+    except (json.JSONDecodeError, OSError) as e:
+        click.echo(f"[ERROR]: Invalid JSON input → {e}")
+    except requests.RequestException as e:
+        click.echo(f"[ERROR]: Failed to upload models → {e}")
+
+
+@model.command("clear", help="Clear all models (soft reset).")
+def clear():
+    try:
+        resp = requests.post(api_url("/model/clear"))
+        resp.raise_for_status()
+        click.echo(f"[INFO]: {resp.json().get('message')}")
+    except requests.RequestException as e:
+        click.echo(f"[ERROR]: Failed to clear models → {e}")
 
 @model.command("list", help="List all available models.")
 def list_models():
