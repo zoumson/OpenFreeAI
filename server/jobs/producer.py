@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from server.config import Config
 from server.infrastructure.celery_app import celery_app
 from celery.result import AsyncResult
-
+from server.utils.jwt_decorator import jwt_required
 api_v1 = Blueprint("api_v1", __name__)
 
 # ---------------------------
@@ -108,6 +108,14 @@ def upload_model():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+@api_v1.route("/model/upload", methods=["POST"])
+@jwt_required(role="admin")
+def upload_model_endpoint(user):
+    from server.managers.llm_model_manager import LLMModelManager
+    data = request.get_json()
+    count = current_app.client_manager.model_manager.bulk_add_from_json_data(data)
+    return jsonify({"message": f"Uploaded {count} models"})
+
 @api_v1.route("/model/list", methods=["GET"])
 def list_models():
     models = current_app.client_manager.model_manager.get_models()
@@ -127,6 +135,12 @@ def clear_models():
         return jsonify({"message": f"Cleared {count} models"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@api_v1.route("/model/clear", methods=["POST"])
+@jwt_required(role="admin")
+def clear_model_endpoint(user):
+    current_app.client_manager.model_manager.clear_all()
+    return jsonify({"message": "All models cleared!"})
 
 # ---------------------------
 # History endpoint
