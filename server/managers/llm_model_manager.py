@@ -31,9 +31,23 @@ class LLMModelManager:
         db.session.commit()
         return True
 
-    def bulk_add_from_json(self, json_file):
+    # def bulk_add_from_json(self, json_file):
+    #     with open(json_file, "r") as f:
+    #         data = json.load(f)
+    #     count = 0
+    #     for provider, models in data.items():
+    #         for m in models:
+    #             if self.add_model(provider=provider, model_name=m["model"], tag=m.get("tag", "")):
+    #                 count += 1
+    #     return count
+    def bulk_add_from_json(self, json_file: str):
+        """Load models from a JSON file path."""
         with open(json_file, "r") as f:
             data = json.load(f)
+        return self.bulk_add_from_dict(data)
+
+    def bulk_add_from_dict(self, data: dict):
+        """Load models directly from a Python dict (parsed JSON)."""
         count = 0
         for provider, models in data.items():
             for m in models:
@@ -52,3 +66,12 @@ class LLMModelManager:
                 "tag": m.tag
             })
         return grouped
+    def clear_models(self):
+        """Delete all models from the table."""
+        try:
+            num_deleted = LLMModel.query.delete()
+            db.session.commit()
+            return num_deleted
+        except Exception:
+            db.session.rollback()
+            raise
