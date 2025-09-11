@@ -1,0 +1,13 @@
+# Gradio for UI
+gradio==3.43.0
+
+# HTTP requests
+requests==2.31.0
+
+# Environment variable management
+python-dotenv==1.0.1
+
+# JSON and regex are built-in, so no need to include
+
+# Optional: for typing hints (Python 3.11+ already includes most)
+typing-extensions==4.8.0
