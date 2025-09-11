@@ -1,4 +1,7 @@
 services:
+  # --------------------
+  # MySQL Database
+  # --------------------
   mysql:
     image: mysql:8.0
     container_name: ${MYSQL_CONT}
@@ -12,7 +15,9 @@ services:
       - '${MYSQL_PORT_EXT}:${MYSQL_PORT_INT}'
     volumes:
       - ./data/mysql_db:/var/lib/mysql
-
+  # --------------------
+  # Redis
+  # --------------------
   redis:
     image: redis:7
     container_name: ${REDIS_CONT}
@@ -26,15 +31,17 @@ services:
       - '--requirepass'
       - '${REDIS_PASSWORD}'
     volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-
-  web:
+      - ./server/redis.conf:/usr/local/etc/redis/redis.conf
+  # --------------------
+  # Server (Flask + Gunicorn)
+  # --------------------
+  server:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     container_name: ${FLASK_CONT}
     env_file:
-      - .env
+      - ./server/.env
     ports:
       - '${FLASK_PORT}:${FLASK_PORT}'
     depends_on:
@@ -45,9 +52,9 @@ services:
     command:
       - dockerize
       - -wait
-      - 'tcp://${MYSQL_CONT}:${MYSQL_PORT_INT}'
+      - 'tcp://mysql:${MYSQL_PORT_INT}'
       - -wait
-      - 'tcp://${REDIS_CONT}:${REDIS_PORT}'
+      - 'tcp://redis:${REDIS_PORT}'
       - -timeout
       - '60s'
       - gunicorn
@@ -57,41 +64,27 @@ services:
       - '${FLASK_HOST}:${FLASK_PORT}'
       - '${GUNICORN_APP}'
 
-    # command:
-    #   - gunicorn
-    #   - '-w'
-    #   - '${GUNICORN_WORKERS}'
-    #   - '-b'
-    #   - '${FLASK_HOST}:${FLASK_PORT}'
-    #   - '${GUNICORN_APP}'
-
-    # command: flask run --host=${FLASK_HOST} --port=${FLASK_PORT}
-    # command: >
-    #   sh -c "
-    #   if [ '$$APP_ENV' = 'production' ]; then
-    #     gunicorn -w 4 -b ${FLASK_HOST}:${FLASK_PORT} '${FLASK_APP}';
-    #   else
-    #     flask run --host=${FLASK_HOST} --port=${FLASK_PORT};
-    #   fi
-    # "
+  # --------------------
+  # Celery Worker
+  # --------------------
   celery_worker:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     container_name: ${CELERY_CONT}
     env_file:
-      - .env
+      - ./server/.env
     depends_on:
       - redis
-      - web
+      - server
     volumes:
       - ./data:/app/data
     command:
       - dockerize
       - -wait
-      - 'tcp://${MYSQL_CONT}:${MYSQL_PORT_INT}'
+      - 'tcp://mysql:${MYSQL_PORT_INT}'
       - -wait
-      - 'tcp://${REDIS_CONT}:${REDIS_PORT}'
+      - 'tcp://redis:${REDIS_PORT}'
       - -timeout
       - '60s'
       - celery
@@ -100,10 +93,21 @@ services:
       - worker
       - --loglevel=info
       - --autoscale=${CELERY_AUTOSCALE}
-    # command:
-    #   - 'celery'
-    #   - '-A'
-    #   - '${CELERY_APP}'
-    #   - 'worker'
-    #   - '--loglevel=info'
-    #   - '--autoscale=${CELERY_AUTOSCALE}'
+
+  # --------------------
+  # Client UI (Gradio)
+  # --------------------
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ${UI_CONT}
+    env_file:
+      - ./client/.env
+    ports:
+      - '${UI_PORT}:${UI_PORT}'
+    # depends_on:
+    #   - server
+    volumes:
+      - ./client:/app/client
+    command: python ui_client.py

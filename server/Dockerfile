@@ -31,7 +31,6 @@ RUN useradd -ms /bin/bash adama
 
 # Switch to non-root user
 USER adama
-
 # Set PYTHONPATH so 'server' is importable
 ENV PYTHONPATH=/app
 
