@@ -3,10 +3,13 @@ import gradio as gr
 import requests
 import re
 import json
-from client.config import SERVER_URL, API_PREFIX
+from client.config import Config  # import Config class
 
-# Toggle for showing upload/clear features
-TRUSTED_MODE = True  # set False if running in public mode
+# Load settings from Config
+SERVER_URL = Config.SERVER_URL
+API_PREFIX = Config.API_PREFIX
+TRUSTED_MODE = Config.TRUSTED_MODE
+UI_PORT = Config.UI_PORT
 
 def api_url(path: str) -> str:
     return f"{SERVER_URL}{API_PREFIX}{path}"
@@ -34,16 +37,14 @@ def upload_model(file_obj):
     if not file_obj:
         return "No file selected."
     try:
-        # file_obj is a dict with 'name' attribute
         file_path = file_obj.name if hasattr(file_obj, "name") else file_obj
         with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)  # validate JSON
+            data = json.load(f)
         resp = requests.post(api_url("/model/upload"), json=data)
         resp.raise_for_status()
         return resp.json().get("message", "Upload successful!")
     except Exception as e:
         return f"Failed to upload model: {e}"
-
 
 def clear_models():
     """Clear all models on server."""
@@ -58,10 +59,8 @@ def clear_models():
 # Chat functions
 # ---------------------------
 def submit_prompt_ui(prompt, model_full_name):
-    """Send the prompt to the /job/prompt endpoint and return status + result."""
     if not prompt:
         return "Waiting for question...", ""
-
     if not model_full_name:
         return "No model selected!", ""
 
@@ -69,12 +68,11 @@ def submit_prompt_ui(prompt, model_full_name):
     try:
         status = "Working on it..."
         result = ""
-
         resp = requests.post(api_url("/job/prompt"), json=payload)
         resp.raise_for_status()
         task_id = resp.json().get("task_id")
 
-        # Poll for the result
+        # Poll for result
         while True:
             job_resp = requests.get(api_url(f"/job/{task_id}"))
             job_resp.raise_for_status()
@@ -87,7 +85,6 @@ def submit_prompt_ui(prompt, model_full_name):
                 status = "Failed"
                 result = "(Error in processing)"
                 break
-
     except requests.RequestException as e:
         return f"Error contacting server: {e}", ""
 
@@ -117,7 +114,6 @@ if TRUSTED_MODE:
         gr.Markdown("## Chocolat Chat")
         with gr.Row():
             with gr.Column(scale=3):
-                # Chat section
                 chat_interface = gr.Interface(
                     fn=submit_prompt_ui,
                     inputs=chat_inputs,
@@ -125,7 +121,6 @@ if TRUSTED_MODE:
                     live=False
                 )
             with gr.Column(scale=1):
-                # Admin section
                 gr.Markdown("### Model Management (Admin)")
                 upload_file = gr.File(label="Upload JSON Model File", file_types=[".json"])
                 upload_btn = gr.Button("Upload Model")
@@ -135,17 +130,10 @@ if TRUSTED_MODE:
                 clear_output = gr.Textbox(label="Clear Status")
 
                 # Bind actions
-                upload_btn.click(
-                    upload_model, 
-                    inputs=upload_file, 
-                    outputs=upload_output
-                ).then(refresh_model_dropdown, None, chat_inputs[1])
-                
-                clear_btn.click(
-                    clear_models, 
-                    inputs=None, 
-                    outputs=clear_output
-                ).then(refresh_model_dropdown, None, chat_inputs[1])
+                upload_btn.click(upload_model, inputs=upload_file, outputs=upload_output)\
+                          .then(refresh_model_dropdown, None, chat_inputs[1])
+                clear_btn.click(clear_models, inputs=None, outputs=clear_output)\
+                          .then(refresh_model_dropdown, None, chat_inputs[1])
 else:
     chat_interface = gr.Interface(
         fn=submit_prompt_ui,
@@ -157,4 +145,4 @@ else:
     ui = chat_interface
 
 if __name__ == "__main__":
-    ui.launch(share=True)
+    ui.launch(server_name="0.0.0.0", server_port=UI_PORT, share=True)
