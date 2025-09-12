@@ -97,17 +97,46 @@ services:
   # --------------------
   # Client UI (Gradio)
   # --------------------
-  client:
+  # client:
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile
+  #   container_name: ${UI_CONT}
+  #   env_file:
+  #     - ./client/.env
+  #   ports:
+  #     - '${UI_PORT}:${UI_PORT}'
+  #   # depends_on:
+  #   #   - server
+  #   volumes:
+  #     - ./client:/app/client
+  #   command: python ui_client.py
+  client_admin:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: ${UI_CONT}
+    container_name: ${ADMIN_CLIENT_CONT}
     env_file:
       - ./client/.env
+    environment:
+      - CLIENT_ROLE=admin
     ports:
-      - '${UI_PORT}:${UI_PORT}'
-    # depends_on:
-    #   - server
+      - '${ADMIN_CLIENT_PORT}:${ADMIN_CLIENT_PORT}'
+    volumes:
+      - ./client:/app/client
+    command: python ui_client.py
+
+  client_user:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ${USER_CLIENT_CONT}
+    env_file:
+      - ./client/.env
+    environment:
+      - CLIENT_ROLE=user
+    ports:
+      - '${USER_CLIENT_PORT}:${USER_CLIENT_PORT}'
     volumes:
       - ./client:/app/client
     command: python ui_client.py

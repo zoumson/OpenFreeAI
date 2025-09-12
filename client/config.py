@@ -1,43 +1,35 @@
-
-# SERVER_URL = "http://127.0.0.1:5000"  # Server root
-# API_PREFIX = "/api/v1"                # API version prefix
-
-# client/config.py
 import os
 from dotenv import load_dotenv
 
-# Load .env file in the client folder
+# Load the single client env
 load_dotenv(override=True)
 
-def get_env_var(name: str, cast=str) -> any:
-    """Get an environment variable, enforce existence, and cast type."""
+CLIENT_ROLE = os.environ.get("CLIENT_ROLE", "user").lower()  # default to 'user'
+
+def get_env_var(name: str, cast=str):
     value = os.environ.get(name)
     if value is None:
         raise RuntimeError(f"Environment variable '{name}' is required but not set.")
-    
-    try:
-        if cast == bool:
-            value_lower = value.lower()
-            if value_lower in ("true", "1"):
-                return True
-            elif value_lower in ("false", "0"):
-                return False
-            else:
-                raise ValueError()
-        return cast(value)
-    except ValueError:
-        raise RuntimeError(f"Environment variable '{name}' must be of type {cast.__name__}, got '{value}'")
+    if cast == bool:
+        val = value.lower()
+        if val in ("true", "1"):
+            return True
+        elif val in ("false", "0"):
+            return False
+        else:
+            raise ValueError()
+    return cast(value)
 
 class Config:
-    # Server URL
     SERVER_URL = get_env_var("SERVER_URL")
     API_PREFIX = get_env_var("API_PREFIX")
+    APP_VERSION = get_env_var("APP_VERSION")
 
-    # Optional client-side settings
-    TRUSTED_MODE = get_env_var("TRUSTED_MODE", bool)
-
-    # UI port for running client container
-    UI_PORT = get_env_var("UI_PORT", int)
-
-    # App version
-    APP_VERSION = get_env_var("APP_VERSION", str)
+    if CLIENT_ROLE == "admin":
+        CLIENT_CONT = get_env_var("ADMIN_CLIENT_CONT")
+        CLIENT_PORT = get_env_var("ADMIN_CLIENT_PORT", int)
+        TRUSTED_MODE = get_env_var("ADMIN_TRUSTED_MODE", bool)
+    else:
+        CLIENT_CONT = get_env_var("USER_CLIENT_CONT")
+        CLIENT_PORT = get_env_var("USER_CLIENT_PORT", int)
+        TRUSTED_MODE = get_env_var("USER_TRUSTED_MODE", bool)

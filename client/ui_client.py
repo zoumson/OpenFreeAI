@@ -9,7 +9,7 @@ from client.config import Config  # import Config class
 SERVER_URL = Config.SERVER_URL
 API_PREFIX = Config.API_PREFIX
 TRUSTED_MODE = Config.TRUSTED_MODE
-UI_PORT = Config.UI_PORT
+UI_PORT = Config.CLIENT_PORT
 
 def api_url(path: str) -> str:
     return f"{SERVER_URL}{API_PREFIX}{path}"
@@ -145,4 +145,4 @@ else:
     ui = chat_interface
 
 if __name__ == "__main__":
-    ui.launch(server_name="0.0.0.0", server_port=UI_PORT, share=True)
+    ui.launch(server_name="0.0.0.0", server_port=UI_PORT, share=False)
