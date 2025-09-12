@@ -3,9 +3,8 @@ import gradio as gr
 import requests
 import re
 import json
-from client.config import Config  # import Config class
+from client.config import Config
 
-# Load settings from Config
 SERVER_URL = Config.SERVER_URL
 API_PREFIX = Config.API_PREFIX
 TRUSTED_MODE = Config.TRUSTED_MODE
@@ -15,16 +14,14 @@ def api_url(path: str) -> str:
     return f"{SERVER_URL}{API_PREFIX}{path}"
 
 def clean_llm_output(text: str) -> str:
-    """Remove markdown artifacts like *, **, etc."""
-    text = re.sub(r"\*+", "", text)  # remove * and ** emphasis
-    text = re.sub(r"_+", "", text)   # remove _ and __ emphasis
+    text = re.sub(r"\*+", "", text)
+    text = re.sub(r"_+", "", text)
     return text.strip()
 
 # ---------------------------
 # Model management functions
 # ---------------------------
 def get_model_list():
-    """Fetch available models from server."""
     try:
         resp = requests.get(api_url("/model/list"))
         resp.raise_for_status()
@@ -33,7 +30,6 @@ def get_model_list():
         return []
 
 def upload_model(file_obj):
-    """Upload JSON model file to server."""
     if not file_obj:
         return "No file selected."
     try:
@@ -47,7 +43,6 @@ def upload_model(file_obj):
         return f"Failed to upload model: {e}"
 
 def clear_models():
-    """Clear all models on server."""
     try:
         resp = requests.post(api_url("/model/clear"))
         resp.raise_for_status()
@@ -72,7 +67,6 @@ def submit_prompt_ui(prompt, model_full_name):
         resp.raise_for_status()
         task_id = resp.json().get("task_id")
 
-        # Poll for result
         while True:
             job_resp = requests.get(api_url(f"/job/{task_id}"))
             job_resp.raise_for_status()
@@ -91,58 +85,68 @@ def submit_prompt_ui(prompt, model_full_name):
     return status, result or "(No output)"
 
 # ---------------------------
+# Optimized dropdown refresh
+# ---------------------------
+previous_models = []
+
+def poll_models_optimized():
+    global previous_models
+    models = get_model_list()
+    if models != previous_models:  # Only update if there's a change
+        previous_models = models
+        if not models:
+            return gr.update(choices=[], value=None)
+        return gr.update(choices=models, value=models[0])
+    return None  # No update needed
+
+
+# ---------------------------
 # Build UI
 # ---------------------------
-def refresh_model_dropdown():
-    models = get_model_list()
-    if not models:
-        return gr.update(choices=[], value=None)
-    return gr.update(choices=models, value=models[0])
+def build_ui():
+    chat_inputs = [
+        gr.Textbox(label="Ask me"),
+        gr.Dropdown(label="Select Model", choices=get_model_list(),
+                    value=(get_model_list()[0] if get_model_list() else None))
+    ]
 
-chat_inputs = [
-    gr.Textbox(label="Ask me"),
-    gr.Dropdown(label="Select Model", choices=get_model_list(), value=(get_model_list()[0] if get_model_list() else None))
-]
+    chat_outputs = [
+        gr.Textbox(label="Status", value="Waiting for question..."),
+        gr.Textbox(label="My Response"),
+    ]
 
-chat_outputs = [
-    gr.Textbox(label="Status", value="Waiting for question..."),
-    gr.Textbox(label="My Response"),
-]
-
-if TRUSTED_MODE:
     with gr.Blocks() as ui:
         gr.Markdown("## Chocolat Chat")
-        with gr.Row():
-            with gr.Column(scale=3):
-                chat_interface = gr.Interface(
-                    fn=submit_prompt_ui,
-                    inputs=chat_inputs,
-                    outputs=chat_outputs,
-                    live=False
-                )
-            with gr.Column(scale=1):
-                gr.Markdown("### Model Management (Admin)")
-                upload_file = gr.File(label="Upload JSON Model File", file_types=[".json"])
-                upload_btn = gr.Button("Upload Model")
-                upload_output = gr.Textbox(label="Upload Status")
 
-                clear_btn = gr.Button("Clear All Models")
-                clear_output = gr.Textbox(label="Clear Status")
+        chat_interface = gr.Interface(
+            fn=submit_prompt_ui,
+            inputs=chat_inputs,
+            outputs=chat_outputs,
+            live=False
+        )
 
-                # Bind actions
-                upload_btn.click(upload_model, inputs=upload_file, outputs=upload_output)\
-                          .then(refresh_model_dropdown, None, chat_inputs[1])
-                clear_btn.click(clear_models, inputs=None, outputs=clear_output)\
-                          .then(refresh_model_dropdown, None, chat_inputs[1])
-else:
-    chat_interface = gr.Interface(
-        fn=submit_prompt_ui,
-        inputs=chat_inputs,
-        outputs=chat_outputs,
-        title="Chocolat Chat",
-        description="Chat with your model via /job/prompt endpoint"
-    )
-    ui = chat_interface
+        # Poll dropdown every 10 seconds, only update if changed
+        ui.load(poll_models_optimized, inputs=None, outputs=chat_inputs[1], every=10)
+
+        if TRUSTED_MODE:
+            with gr.Row():
+                with gr.Column(scale=1):
+                    gr.Markdown("### Model Management (Admin)")
+                    upload_file = gr.File(label="Upload JSON Model File", file_types=[".json"])
+                    upload_btn = gr.Button("Upload Model")
+                    upload_output = gr.Textbox(label="Upload Status")
+
+                    clear_btn = gr.Button("Clear All Models")
+                    clear_output = gr.Textbox(label="Clear Status")
+
+                    # Admin actions trigger optimized refresh
+                    upload_btn.click(upload_model, inputs=upload_file, outputs=upload_output)\
+                              .then(poll_models_optimized, None, chat_inputs[1])
+                    clear_btn.click(clear_models, inputs=None, outputs=clear_output)\
+                              .then(poll_models_optimized, None, chat_inputs[1])
+
+    return ui
 
 if __name__ == "__main__":
+    ui = build_ui()
     ui.launch(server_name="0.0.0.0", server_port=UI_PORT, share=False)

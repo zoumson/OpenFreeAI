@@ -1,5 +1,5 @@
 # Gradio for UI
-gradio==3.43.0
+gradio==4.44.1
 
 # HTTP requests
 requests==2.31.0

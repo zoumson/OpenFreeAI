@@ -12,7 +12,7 @@ from server.database.models import PromptRecord
 from flask import current_app
 
 
-from flagchat4 import (
+from server.flagchat4 import (
     set_client as fc_set_client,       # Set the client object to use (default uses openai module)
     get_reply as fc_get_reply,         # Return a reply given a list of messages
     chat as fc_chat,                   # Input system and user messages, returns reply while recording conversation history

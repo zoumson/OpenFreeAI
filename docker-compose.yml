@@ -49,6 +49,7 @@ services:
       - redis
     volumes:
       - ./data:/app/data
+      - ./server:/app/server
     command:
       - dockerize
       - -wait
@@ -79,6 +80,7 @@ services:
       - server
     volumes:
       - ./data:/app/data
+      - ./server:/app/server
     command:
       - dockerize
       - -wait
@@ -97,20 +99,7 @@ services:
   # --------------------
   # Client UI (Gradio)
   # --------------------
-  # client:
-  #   build:
-  #     context: ./client
-  #     dockerfile: Dockerfile
-  #   container_name: ${UI_CONT}
-  #   env_file:
-  #     - ./client/.env
-  #   ports:
-  #     - '${UI_PORT}:${UI_PORT}'
-  #   # depends_on:
-  #   #   - server
-  #   volumes:
-  #     - ./client:/app/client
-  #   command: python ui_client.py
+
   client_admin:
     build:
       context: ./client
