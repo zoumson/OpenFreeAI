@@ -26,28 +26,39 @@ api_v1 = Blueprint("api_v1", __name__)
 
 @api_v1.route("/job/prompt", methods=["POST"])
 def send_prompt():
-    from server.jobs.tasks import process_prompt  # local import to avoid circular import
-
     data = request.get_json()
     prompt = data.get("prompt")
-    model_index = data.get("model_index", 0)
-    model_name = data.get("model_name")  # <-- NEW: accept model full name
     stream = data.get("stream", False)
+    model_index = data.get("model_index", 0)
+    model_name = data.get("model_name")
+    models = data.get("models")  # NEW multi-model support
 
     if not prompt:
         return jsonify({"error": "Missing 'prompt'"}), 400
 
-    # Decide which model to use
-    # If model_name is provided, find its index in your model manager
-    if model_name:
-        all_models = current_app.client_manager.model_manager.get_models()
+    all_models = current_app.client_manager.model_manager.get_models()
+
+    # Determine which models to use
+    if models:
+        invalid = [m for m in models if m not in all_models]
+        if invalid:
+            return jsonify({"error": f"Models not found: {invalid}"}), 404
+        selected_indexes = [all_models.index(m) for m in models]
+    elif model_name:
         if model_name not in all_models:
             return jsonify({"error": f"Model '{model_name}' not found"}), 404
-        model_index = all_models.index(model_name)
+        selected_indexes = [all_models.index(model_name)]
+    else:
+        selected_indexes = [model_index]
 
-    # Enqueue Celery task
-    task = process_prompt.apply_async(args=[prompt, model_index, stream])
-    return jsonify({"task_id": task.id, "status": "queued"})
+    # Enqueue one task per model
+    task_ids = []
+    for idx in selected_indexes:
+        task = process_prompt.apply_async(args=[prompt, idx, stream])
+        task_ids.append(task.id)
+
+    return jsonify({"task_ids": task_ids, "status": "queued"})
+
 
 @api_v1.route("/job/conversation", methods=["POST"])
 def conversation():
