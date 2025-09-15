@@ -26,6 +26,7 @@ api_v1 = Blueprint("api_v1", __name__)
 
 @api_v1.route("/job/prompt", methods=["POST"])
 def send_prompt():
+    from server.jobs.tasks import process_prompt  # local import to avoid circular import
     data = request.get_json()
     prompt = data.get("prompt")
     stream = data.get("stream", False)
