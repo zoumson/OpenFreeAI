@@ -1,3 +1,4 @@
+# client/ui_client.py
 import gradio as gr
 import requests
 import re
@@ -54,38 +55,41 @@ def clear_models():
 # ---------------------------
 def submit_prompt_ui(prompt, selected_models):
     if not prompt:
-        return ["Waiting for question..."] * len(selected_models or []), ""
+        return "Waiting for question...", ""
     if not selected_models:
-        return ["No model selected!"], ""
-
-    # Ensure it's always a list
-    if isinstance(selected_models, str):
-        selected_models = [selected_models]
+        return "No model selected!", ""
 
     payload = {"prompt": prompt, "models": selected_models, "stream": False}
     try:
+        status = "Working on it..."
+        result = ""
         resp = requests.post(api_url("/job/prompt"), json=payload)
         resp.raise_for_status()
-        data = resp.json()
+        task_ids = resp.json().get("task_ids", [])
 
         results = []
-        for model, task_id in zip(selected_models, data.get("task_ids", [])):
+        for task_id, model in zip(task_ids, selected_models):
             while True:
                 job_resp = requests.get(api_url(f"/job/{task_id}"))
                 job_resp.raise_for_status()
                 job_data = job_resp.json()
-                status = job_data.get("status")
-                if status == "SUCCESS":
+                if job_data.get("status") == "SUCCESS":
                     text = clean_llm_output(job_data.get("result", ""))
-                    results.append(f"### {model}\n{text}")
+                    if len(selected_models) > 1:
+                        results.append(f"### {model}\n{text}")
+                    else:
+                        results.append(text)
                     break
-                elif status == "FAILURE":
-                    results.append(f"### {model}\n(Error in processing)")
+                elif job_data.get("status") == "FAILURE":
+                    results.append(f"{model}: (Error in processing)")
                     break
 
-        return results, "\n\n".join(results)
+        status = "Done"
+        result = "\n\n".join(results)
     except requests.RequestException as e:
-        return [f"Error contacting server: {e}"], ""
+        return f"Error contacting server: {e}", ""
+
+    return status, result or "(No output)"
 
 # ---------------------------
 # Optimized dropdown refresh
@@ -95,12 +99,12 @@ previous_models = []
 def poll_models_optimized():
     global previous_models
     models = get_model_list()
-    if models != previous_models:
+    if models != previous_models:  # Only update if there's a change
         previous_models = models
         if not models:
             return gr.update(choices=[], value=[])
         return gr.update(choices=models, value=[models[0]])
-    return None
+    return None  # No update needed
 
 # ---------------------------
 # Build UI
@@ -108,17 +112,17 @@ def poll_models_optimized():
 def build_ui():
     chat_inputs = [
         gr.Textbox(label="Ask me"),
-        gr.CheckboxGroup(
+        gr.Dropdown(
             label="Select Model(s)",
             choices=get_model_list(),
             value=([get_model_list()[0]] if get_model_list() else []),
-            elem_id="model-list",
+            multiselect=True,   # ✅ allow multiple selections
         ),
     ]
 
     chat_outputs = [
-        gr.Markdown(label="Model Responses", elem_id="response-output"),
-        gr.Textbox(label="Aggregated Output (optional)"),
+        gr.Textbox(label="Status", value="Waiting for question..."),
+        gr.Textbox(label="My Response"),
     ]
 
     with gr.Blocks() as ui:
@@ -128,7 +132,7 @@ def build_ui():
             fn=submit_prompt_ui,
             inputs=chat_inputs,
             outputs=chat_outputs,
-            live=False,
+            live=False
         )
 
         # Poll dropdown every 10 seconds, only update if changed
