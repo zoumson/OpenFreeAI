@@ -4,11 +4,23 @@ import requests
 import re
 import json
 from client.config import Config
+import logging
+import time
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 
 SERVER_URL = Config.SERVER_URL
 API_PREFIX = Config.API_PREFIX
 TRUSTED_MODE = Config.TRUSTED_MODE
 UI_PORT = Config.CLIENT_PORT
+
+
+
+# ---------------------------
+# Globals
+# ---------------------------
+previous_models = []
+previous_selected_models = []
 
 def api_url(path: str) -> str:
     return f"{SERVER_URL}{API_PREFIX}{path}"
@@ -69,7 +81,7 @@ def submit_prompt_ui(prompt, selected_models):
     previous_selected_models = selected_models
 
     if not prompt:
-        return ["Waiting for question..."] * len(selected_models), ""
+        return "Waiting for question...", ""
 
     payload = {"prompt": prompt, "models": selected_models, "stream": False}
 
@@ -80,31 +92,43 @@ def submit_prompt_ui(prompt, selected_models):
         task_ids = data.get("task_ids", [])
 
         results = []
-        for task_id, model in zip(task_ids, selected_models):
+        for idx, (task_id, model) in enumerate(zip(task_ids, selected_models), start=1):
             while True:
                 job_resp = requests.get(api_url(f"/job/{task_id}"))
                 job_resp.raise_for_status()
                 job_data = job_resp.json()
+                logging.debug(f"Job data: {job_data}")
+
                 status = job_data.get("status")
-                if status == "SUCCESS":
-                    text = clean_llm_output(job_data.get("result", ""))
-                    results.append(f"### {model}\n{text}")
+                result_text = job_data.get("result", "")
+
+                if status == "FAILURE":
+                    results.append(f"{idx}. **`{model}`**\nError")
                     break
-                elif status == "FAILURE":
-                    results.append(f"### {model}\n(Error in processing)")
+
+                elif status == "SUCCESS":
+                    cleaned_text = clean_llm_output(result_text)
+                    if not cleaned_text or "error" in cleaned_text.lower():
+                        results.append(f"{idx}. {model} ❌ Error")
+                    else:
+                        results.append(f"{idx}. {model} ✅ {cleaned_text}")
                     break
+
+                else:  # PENDING
+                    time.sleep(0.5)  # Wait a bit before polling again
 
     except requests.RequestException as e:
-        results = [f"Error contacting server: {e}"]
+        return f"Error contacting server: {e}", ""
 
-    return results, "\n\n".join(results)
+    # Quick fix: simple status and full response
+    status_msg = "Done ✅" if results else "No response"
+    full_response = "\n\n".join(results)
+    return status_msg, full_response
 
 
 # ---------------------------
 # Optimized dropdown refresh
 # ---------------------------
-previous_models = []
-
 def poll_models_optimized():
     global previous_models
     models = get_model_list()
