@@ -33,3 +33,4 @@ Thumbs.db
 # Ignore MySQL data files
 # data/mysql_db/
 data/
+*.env

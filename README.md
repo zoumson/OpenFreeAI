@@ -7,6 +7,7 @@ OpenFreeAI is a local AI chat platform with a web-based interface, designed for 
 - **User Chat Interface**: Ask questions to AI models via a web-based client.
 - **Admin Interface**: Upload JSON model files, clear models, and manage available models.
 - **Dynamic Model Loading**: Users automatically see newly added models without restarting the client.
+- **Dynamic Multi-Model Support**: Users can select multiple models at once; responses are indexed and displayed with status emojis.
 - **REST API Integration**: Communicates with the server via `/job/prompt` and `/model` endpoints.
 - **Asynchronous Task Processing**: Handles AI prompt processing in the background using Celery.
 - **Containerized Deployment**: Easily run server, task queue, and client interfaces in Docker containers.

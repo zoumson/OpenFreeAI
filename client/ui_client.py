@@ -103,15 +103,15 @@ def submit_prompt_ui(prompt, selected_models):
                 result_text = job_data.get("result", "")
 
                 if status == "FAILURE":
-                    results.append(f"{idx}. **`{model}`**\nError")
+                    results.append(f"{idx}. {model} ❌")
                     break
 
                 elif status == "SUCCESS":
                     cleaned_text = clean_llm_output(result_text)
                     if not cleaned_text or "error" in cleaned_text.lower():
-                        results.append(f"{idx}. {model} ❌ Error")
+                        results.append(f"{idx}. {model} ❌")
                     else:
-                        results.append(f"{idx}. {model} ✅ {cleaned_text}")
+                        results.append(f"{idx}. {model} ✅ \n{cleaned_text}")
                     break
 
                 else:  # PENDING
