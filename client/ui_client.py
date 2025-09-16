@@ -54,18 +54,30 @@ def clear_models():
 # Chat functions
 # ---------------------------
 def submit_prompt_ui(prompt, selected_models):
-    if not prompt:
-        return "Waiting for question...", ""
+    global previous_selected_models
+
+    models_available = get_model_list()
     if not selected_models:
-        return "No model selected!", ""
+        # Use previous selection if available, else default to first model
+        selected_models = previous_selected_models or ([models_available[0]] if models_available else [])
+
+    # Normalize to list
+    if isinstance(selected_models, str):
+        selected_models = [selected_models]
+
+    # Save current selection for next call
+    previous_selected_models = selected_models
+
+    if not prompt:
+        return ["Waiting for question..."] * len(selected_models), ""
 
     payload = {"prompt": prompt, "models": selected_models, "stream": False}
+
     try:
-        status = "Working on it..."
-        result = ""
         resp = requests.post(api_url("/job/prompt"), json=payload)
         resp.raise_for_status()
-        task_ids = resp.json().get("task_ids", [])
+        data = resp.json()
+        task_ids = data.get("task_ids", [])
 
         results = []
         for task_id, model in zip(task_ids, selected_models):
@@ -73,23 +85,20 @@ def submit_prompt_ui(prompt, selected_models):
                 job_resp = requests.get(api_url(f"/job/{task_id}"))
                 job_resp.raise_for_status()
                 job_data = job_resp.json()
-                if job_data.get("status") == "SUCCESS":
+                status = job_data.get("status")
+                if status == "SUCCESS":
                     text = clean_llm_output(job_data.get("result", ""))
-                    if len(selected_models) > 1:
-                        results.append(f"### {model}\n{text}")
-                    else:
-                        results.append(text)
+                    results.append(f"### {model}\n{text}")
                     break
-                elif job_data.get("status") == "FAILURE":
-                    results.append(f"{model}: (Error in processing)")
+                elif status == "FAILURE":
+                    results.append(f"### {model}\n(Error in processing)")
                     break
 
-        status = "Done"
-        result = "\n\n".join(results)
     except requests.RequestException as e:
-        return f"Error contacting server: {e}", ""
+        results = [f"Error contacting server: {e}"]
 
-    return status, result or "(No output)"
+    return results, "\n\n".join(results)
+
 
 # ---------------------------
 # Optimized dropdown refresh
