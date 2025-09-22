@@ -111,7 +111,8 @@ def submit_prompt_ui(prompt, selected_models):
 
     models_available = get_model_list()
     if not selected_models:
-        selected_models = previous_selected_models or ([models_available[0]] if models_available else [])
+        selected_models = [models_available[0]] if models_available else []
+        # selected_models = previous_selected_models or ([models_available[0]] if models_available else [])
 
     if isinstance(selected_models, str):
         selected_models = [selected_models]

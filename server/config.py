@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Load .env (override ensures any existing env vars are replaced)
-load_dotenv(override=True)
+# load_dotenv(override=True)
 
 def get_env_var(name: str, cast=str) -> any:
     """Get an environment variable, enforce existence, and cast type."""

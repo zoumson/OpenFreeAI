@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Load the single client env
-load_dotenv(override=True)
+# load_dotenv(override=True)
 
 CLIENT_ROLE = os.environ.get("CLIENT_ROLE", "user").lower()  # default to 'user'
 

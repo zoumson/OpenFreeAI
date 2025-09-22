@@ -6,21 +6,26 @@ services:
     image: mysql:8.0
     container_name: ${MYSQL_CONT}
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # environment:
+    #   MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    #   MYSQL_DATABASE: ${MYSQL_DATABASE}
+    #   MYSQL_USER: ${MYSQL_USER}
+    #   MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    env_file:
+      - ./server/.env
     ports:
       - '${MYSQL_PORT_EXT}:${MYSQL_PORT_INT}'
     volumes:
       - ./data/mysql_db:/var/lib/mysql
+      # - ./server/.env:/app/.env
   # --------------------
   # Redis
   # --------------------
   redis:
     image: redis:7
     container_name: ${REDIS_CONT}
+    env_file:
+      - ./server/.env
     ports:
       - '${REDIS_PORT}:${REDIS_PORT}'
     command:
@@ -32,6 +37,7 @@ services:
       - '${REDIS_PASSWORD}'
     volumes:
       - ./server/redis.conf:/usr/local/etc/redis/redis.conf
+      # - ./server/.env:/app/.env
   # --------------------
   # Server (Flask + Gunicorn)
   # --------------------
@@ -50,6 +56,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./server:/app/server
+      # - ./server/.env:/app/.env
     command:
       - dockerize
       - -wait
@@ -81,6 +88,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./server:/app/server
+      # - ./server/.env:/app/.env
     command:
       - dockerize
       - -wait
@@ -113,6 +121,7 @@ services:
       - '${ADMIN_CLIENT_PORT}:${ADMIN_CLIENT_PORT}'
     volumes:
       - ./client:/app/client
+      # - ./client/.env:/app/.env
     command: python ui_client.py
 
   client_user:
@@ -128,4 +137,5 @@ services:
       - '${USER_CLIENT_PORT}:${USER_CLIENT_PORT}'
     volumes:
       - ./client:/app/client
+      # - ./client/.env:/app/.env
     command: python ui_client.py
