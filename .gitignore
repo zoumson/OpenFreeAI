@@ -34,3 +34,6 @@ Thumbs.db
 # data/mysql_db/
 data/
 *.env
+.env
+server/.env
+client/.env
