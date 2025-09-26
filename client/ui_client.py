@@ -107,21 +107,20 @@ def poll_job(task_id, model, idx, timeout=300):
 
 
 def submit_prompt_ui(prompt, selected_models):
-    global previous_selected_models
-
+    if not prompt: 
+        yield "Waiting for question...", "" 
+        return   
     models_available = get_model_list()
+    if not models_available:
+        yield "No models available. Please contact the administrator.", ""
+        return    
     if not selected_models:
-        selected_models = [models_available[0]] if models_available else []
-        # selected_models = previous_selected_models or ([models_available[0]] if models_available else [])
-
+        yield "No model selected. Please choose at least one model.", ""
+        return
+    
     if isinstance(selected_models, str):
         selected_models = [selected_models]
 
-    previous_selected_models = selected_models
-
-    if not prompt:
-        yield "Waiting for question...", ""
-        return
 
     payload = {"prompt": prompt, "models": selected_models, "stream": False}
 
@@ -179,6 +178,8 @@ def poll_models_optimized():
         previous_models = models
         if not models:
             return gr.update(choices=[], value=[])
+        # return gr.update(choices=models, value=[models[0]])
+        # remove default model upon update 
         return gr.update(choices=models, value=[models[0]])
     return None  # No update needed
 
@@ -192,6 +193,7 @@ def build_ui():
         gr.Dropdown(
             label="Select Model(s)",
             choices=get_model_list(),
+            # Keep default model upon start up
             value=([get_model_list()[0]] if get_model_list() else []),
             multiselect=True,   # ✅ allow multiple selections
         ),
